@@ -697,44 +697,42 @@ class RPiReader(tk.Tk):
             global deltafConnected
             global meecoConnected
             global comPortOxygen
-            # testComOxygen = get_O2(comPortOxygen = '/dev/ttyUSB1')
-            comPortOxygen = '/dev/ttyUSB1'
             # #await asyncio.sleep(0.9)
-            # time.sleep(0.9)
-            deltafConnected = True
-            #
-            # try:
-            #     if 'e' in testComOxygen:
-            #         time.sleep(0.2)
-            #         try:
-            #             testComOxygen = get_O2(comPortOxygen)
-            #             deltafConnected = True
-            #             #print("deltaf connected")
-            #             #await asyncio.sleep(0.2)
-            #             time.sleep(0.2)
-            #         except:
-            #             deltafConnected = False
-            #         comPortOxygen = '/dev/ttyUSB0'
-            #         #await asyncio.sleep(0.2)
-            #         time.sleep(0.2)
-            # except:
-            #     deltafConnected = False
-            #     print("deltaf not connected")
-            #     pass
-            #
-            #
+            time.sleep(0.9)
+            try:
+                comPortOxygen = '/dev/ttyUSB1'
+                testComOxygen = get_O2(comPortOxygen=comPortOxygen)
+                deltafConnected = True
+
+                if 'e' in testComOxygen:
+                    time.sleep(0.2)
+                    try:
+                        testComOxygen = get_O2(comPortOxygen)
+                        deltafConnected = True
+                        #print("deltaf connected")
+                        #await asyncio.sleep(0.2)
+                        time.sleep(0.2)
+                    except:
+                        deltafConnected = False
+                    comPortOxygen = '/dev/ttyUSB0'
+                    #await asyncio.sleep(0.2)
+                    time.sleep(0.2)
+            except:
+                deltafConnected = False
+                print("deltaf not connected")
+                pass
+
+
             global comPortMoist
             comPortMoist = '/dev/ttyUSB0'
-            # try:
-            #     testComMoisture = raw_to_ppb(get_h20(comPortMoist))
-            #     comPortMoist = '/dev/ttyUSB0'
-            #     meecoConnected = True
-            # except:
-            #     try:
-            #         comPortMoist = '/dev/ttyUSB1'
-            #         meecoConnected = True
-            #     except:
-            meecoConnected = True
+            try:
+                testComMoisture = raw_to_ppb(get_h20(comPortMoist))
+                comPortMoist = '/dev/ttyUSB0'
+                meecoConnected = True
+            except:
+                comPortMoist = '/dev/ttyUSB1'
+                meecoConnected = False
+
             #         print("meeco not connected")
             # #await asyncio.sleep(1)
             time.sleep(1)
@@ -3897,8 +3895,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                     # await asyncio.sleep(0.02)
                     # time.sleep(0.02)
                     # print('..... attempting with ' + comPortOxygen + '.....')
-                    # o2 = get_O2(comPortOxygen)  #### comment out for random data###
-                    o2 = str(random.random() * 100)
+                    o2 = get_O2(comPortOxygen)  #### comment out for random data###
 
                     if 'e' in o2:
                         currento2.set('N/A')
@@ -3918,6 +3915,15 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                     # time.sleep(0.02)
                     attempts += 1
                     if attempts > 14:
+                        ## RUNNING AS DEMO VALUES
+                        o2 = str(random.random() * 100)
+                        o2 = round(float(o2), 1)
+                        currento2.set(o2)
+                        deltafConnected = True
+                        attempts = 15
+                        break
+                        ##############
+
                         o2 = 9999
                         deltafConnected = False
                         print('attempt FAILED for O2')
@@ -3927,6 +3933,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                                 "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                             fuckitup('disconnect')
                             break
+
         elif deltafConnected == False and var2.get() != 'radH2O':
             attempts = 0
             while attempts < 3:
@@ -3934,8 +3941,8 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                     # await asyncio.sleep(0.02)
                     # time.sleep(0.02)
                     # print('..... attempting with ' + comPortOxygen + '.....')
-                    # o2 = get_O2(comPortOxygen)  #### comment out for random data###
-                    o2 = str(random.random() * 100)
+                    o2 = get_O2(comPortOxygen)  #### comment out for random data###
+
                     # print(o2)
                     if 'e' in o2:
                         currento2.set('N/A')
@@ -3955,6 +3962,14 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                     # await asyncio.sleep(0.02)
                     # time.sleep(0.02)
                     if attempts > 1:
+                        ## RUNNING AS DEMO VALUES
+                        o2 = str(random.random() * 100)
+                        o2 = round(float(o2), 1)
+                        currento2.set(o2)
+                        deltafConnected = True
+                        attempts = 15
+                        break
+
                         o2 = 9999
                         deltafConnected = False
                         print('attempt FAILED for O2')
@@ -6154,8 +6169,8 @@ def manage_pdf():
 
     root.mainloop()
 
-
-app = RPiReader()
-ani1 = animation.FuncAnimation(f1, animateo2, interval=intervalO2)
-ani2 = animation.FuncAnimation(f2, animateh2o, interval=intervalH2O)
-app.mainloop()
+if __name__ == '__main__':
+    app = RPiReader()
+    ani1 = animation.FuncAnimation(f1, animateo2, interval=intervalO2)
+    ani2 = animation.FuncAnimation(f2, animateh2o, interval=intervalH2O)
+    app.mainloop()
