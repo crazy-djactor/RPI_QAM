@@ -2,6 +2,7 @@
 
 from contextlib import suppress
 import matplotlib
+import os
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -57,6 +58,7 @@ QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
 #### initial animation intervals are adjusted later###
 intervalO2 = 3500
 intervalH2O = 3500
+global root_path
 
 
 #### ~lines0-500 are serial communication functions ###
@@ -636,7 +638,7 @@ class Splash(tk.Toplevel):
         self.geometry("%dx%d%+d%+d" % (1920, 1080, -2, 30))
         self.title("  Trace Gas View  ")
 
-        self.myIcon = ImageTk.PhotoImage(file='./TGViewClean.png')
+        self.myIcon = ImageTk.PhotoImage(file=f'{root_path}/TGViewClean.png')
         self.iconphoto(True, self.myIcon)
 
         ####### REPLACED the time, date, and logo image with a splash screen image #######
@@ -646,7 +648,7 @@ class Splash(tk.Toplevel):
         splashYPadding = 170
 
         ### Splash Logo
-        self.gambar = Image.open('./SplashScreen2021.png')
+        self.gambar = Image.open(f'{root_path}/SplashScreen2021.png')
         self.imgSplash = ImageTk.PhotoImage(self.gambar)
         self.img = Label(self, image=self.imgSplash, bg="grey25")
         self.img.image = self.imgSplash
@@ -679,12 +681,12 @@ class RPiReader(tk.Tk):
         ####Display splash screen first while startup sequence continues
         splash = Splash(self)
 
-        self.myIcon = ImageTk.PhotoImage(file='./TGViewClean.png')
+        self.myIcon = ImageTk.PhotoImage(file=f'{root_path}/TGViewClean.png')
         self.iconphoto(True, self.myIcon)
         tk.Tk.wm_title(self, "  Trace Gas View  ")
 
         ####Check to see if TGView is already open (prevent startup if it is)
-        p = os.popen("ps aux | grep './TGView.py' | cut -c 43-44")
+        p = os.popen("ps aux | grep 'TGView.py' | cut -c 43-44")
         p = p.read()
         # print(p)
         if "4" in p or "3" in p or "2" in p:
@@ -709,19 +711,18 @@ class RPiReader(tk.Tk):
                     try:
                         testComOxygen = get_O2(comPortOxygen)
                         deltafConnected = True
-                        #print("deltaf connected")
-                        #await asyncio.sleep(0.2)
+                        # print("deltaf connected")
+                        # await asyncio.sleep(0.2)
                         time.sleep(0.2)
                     except:
                         deltafConnected = False
                     comPortOxygen = '/dev/ttyUSB0'
-                    #await asyncio.sleep(0.2)
+                    # await asyncio.sleep(0.2)
                     time.sleep(0.2)
             except:
                 deltafConnected = False
                 print("deltaf not connected")
                 pass
-
 
             global comPortMoist
             comPortMoist = '/dev/ttyUSB0'
@@ -809,14 +810,14 @@ class StartPage(tk.Frame):
         # label1.config(bg="grey25", fg=QAM_GREEN)
 
         ### Button icons
-        aboutIcon = ImageTk.PhotoImage(file=r"./info.png", master=self)
-        beginIcon = ImageTk.PhotoImage(file=r"./plot1.png", master=self)
-        saveIcon = ImageTk.PhotoImage(file=r"./download.png", master=self)
-        modifyIcon = ImageTk.PhotoImage(file=r"./edit.png", master=self)
-        settingsIcon = ImageTk.PhotoImage(file=r"./settings.png", master=self)
+        aboutIcon = ImageTk.PhotoImage(file=f"{root_path}/info.png", master=self)
+        beginIcon = ImageTk.PhotoImage(file=f"{root_path}/plot1.png", master=self)
+        saveIcon = ImageTk.PhotoImage(file=f"{root_path}/download.png", master=self)
+        modifyIcon = ImageTk.PhotoImage(file=f"{root_path}/edit.png", master=self)
+        settingsIcon = ImageTk.PhotoImage(file=f"{root_path}/settings.png", master=self)
 
         ## Start page QAM logo
-        QAMstart = Image.open('./QAM.gif')
+        QAMstart = Image.open(f'{root_path}/QAM.gif')
         imgStart = ImageTk.PhotoImage(QAMstart, master=self)
         imggg = tk.Label(self, image=imgStart, borderwidth=0, highlightthickness=0)
         imggg.image = imgStart
@@ -846,7 +847,7 @@ class StartPage(tk.Frame):
         label.place(x=meecoStatusMessageXfield, y=statusMessageYfield)
 
         ## read Header_default.csv for test parameters
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             global header_list
             header_list = []
@@ -898,7 +899,7 @@ class StartPage(tk.Frame):
         tracer_spec = header_list[17]
         ### create initial path (this is only used if the user never starts test)
         global pathstart
-        pathstart = './TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + start_timee
+        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + start_timee
 
         ### var2 determines which analyzer is talking
         global var2
@@ -950,9 +951,9 @@ class StartPage(tk.Frame):
         graphXpad = 860
         global img
         try:
-            gambar = Image.open('./TGView/graphO2.png')
+            gambar = Image.open(f'{root_path}/TGView/graphO2.png')
         except:
-            gambar = Image.open('./graph1.png')
+            gambar = Image.open(f'{root_path}/graph1.png')
         imgSplash = ImageTk.PhotoImage(gambar)
         img = Label(self, image=imgSplash, bg="grey25")
         img.image = imgSplash
@@ -960,9 +961,9 @@ class StartPage(tk.Frame):
         #
         global img3
         try:
-            gambar2 = Image.open('./TGView/graphH2O.png')
+            gambar2 = Image.open(f'{root_path}/TGView/graphH2O.png')
         except:
-            gambar2 = Image.open('./graph1.png')
+            gambar2 = Image.open(f'{root_path}/graph1.png')
         imgSplash2 = ImageTk.PhotoImage(gambar2)
         img3 = Label(self, image=imgSplash2, bg="grey25")
         img3.image = imgSplash2
@@ -1185,7 +1186,7 @@ def about_window():
     paddy = 5
 
     ## Button image
-    likeIcon = ImageTk.PhotoImage(file=r"./like.png", master=topA)
+    likeIcon = ImageTk.PhotoImage(file=f"{root_path}/like.png", master=topA)
 
     ### Dispaly the time that the program was opened to ensure testing validity
     label4 = tk.Label(topA, text="Application opened:", bg="grey25", fg='orange', font=(aboutFont, 40, 'bold'))
@@ -1364,7 +1365,7 @@ class AnalyzerFieldsScreen(tk.Frame):
             header_list[15] = self.tracer_cal.get()
             header_list[16] = self.tracer_flow.get()
             header_list[17] = self.tracer_spec.get()
-            with open('./Header_default.csv', 'w+', newline='') as d:
+            with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
                 writer4 = csv.writer(d)
                 for row in header_list:
                     writer4.writerow([row])
@@ -1378,7 +1379,7 @@ class AnalyzerFieldsScreen(tk.Frame):
             controller.show_frame(StartPage)
             update_fields()
 
-        savecIcon = ImageTk.PhotoImage(file=r"./SaveC.png", master=self)
+        savecIcon = ImageTk.PhotoImage(file=f"{root_path}/SaveC.png", master=self)
 
         button1 = tk.Button(self, text="Save Changes", image=savecIcon, compound="left", padx=40, bg="grey35",
                             activebackground="#678277", fg="White", activeforeground="white",
@@ -1387,7 +1388,7 @@ class AnalyzerFieldsScreen(tk.Frame):
         button1.place(height=125, width=750, x=575, y=790)
         button1.image = savecIcon
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             global header_list
             header_list = []
@@ -1747,7 +1748,7 @@ class PageOne(tk.Frame):
         pady = 835
 
         # added the stop icon to be used in the Stop recording button
-        stopIcon = ImageTk.PhotoImage(file=r"./stop1.png", master=self)
+        stopIcon = ImageTk.PhotoImage(file=f"{root_path}/stop1.png", master=self)
 
         # Stop Recording Button => starts the stop() function
         self.button3 = tk.Button(self, text="Stop Recording Test", activebackground="firebrick1", image=stopIcon,
@@ -1759,7 +1760,7 @@ class PageOne(tk.Frame):
         self.button3.image = stopIcon
 
         # added the settings icon to be used in the Equipment controls button
-        settingsIcon = ImageTk.PhotoImage(file=r"./settings.png", master=self)
+        settingsIcon = ImageTk.PhotoImage(file=f"{root_path}/settings.png", master=self)
 
         self.button1 = tk.Button(self, text="Equipment Controls", image=settingsIcon, compound="left", padx=35,
                                  activebackground="#2FA4FF", bg="grey35", highlightbackground="#2FA4FF",
@@ -1935,7 +1936,7 @@ class PageOne(tk.Frame):
                 writer3.writerow([h2oFinalValue])
             c.close()
 
-        with open('./Header_default.csv', 'w+', newline='') as d:
+        with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
             writer4 = csv.writer(d)
             for row in header_list:
                 writer4.writerow([row])
@@ -2167,7 +2168,7 @@ def confirm_fields(start_stop):
             writer3.writerow([start_time])
             c.flush()
 
-        with open('./Header_default.csv', 'w+', newline='') as d:
+        with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
             writer4 = csv.writer(d)
             for row in header_list:
                 writer4.writerow([row])
@@ -2442,7 +2443,7 @@ def confirm_fields(start_stop):
             pathF = folder
 
         ### adjust Header_default with new field names
-        with open('./Header_default.csv', 'w+', newline='') as d:
+        with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
             writer4 = csv.writer(d)
             for row in header_list:
                 writer4.writerow([row])
@@ -2650,7 +2651,7 @@ def confirm_fields(start_stop):
     #    button1.place(x=5,y=5)
     if start_stop == 'stop' or start_stop == 'manage':
         # BUTTON ICON
-        reportIcon = ImageTk.PhotoImage(file=r"./report.png", master=top4)
+        reportIcon = ImageTk.PhotoImage(file=f"{root_path}/report.png", master=top4)
 
         button2 = tk.Button(top4, text="Generate PDF Report", image=reportIcon, compound="left", padx=35,
                             font=LARGE_FONT, bg="grey35", activebackground="orange", fg="White",
@@ -2662,7 +2663,7 @@ def confirm_fields(start_stop):
         # button4 = tk.Button(top4, text="Generate Failed Report",bg="grey15",fg="grey75",font=LARGE_FONT, command=update_and_generateFailedPDF)
         # button4.place(x=5,y=65)
 
-        deleteIcon = ImageTk.PhotoImage(file=r"./delete.png", master=top4)
+        deleteIcon = ImageTk.PhotoImage(file=f"{root_path}/delete.png", master=top4)
 
         button3 = tk.Button(top4, text="Delete This Report", image=deleteIcon, compound="left", padx=50, bg="grey35",
                             activebackground="firebrick1", fg="White", activeforeground="white",
@@ -2672,7 +2673,7 @@ def confirm_fields(start_stop):
         button3.image = deleteIcon
 
     if start_stop == 'start':
-        startIcon = ImageTk.PhotoImage(file=r"./confirm1.png", master=top4)
+        startIcon = ImageTk.PhotoImage(file=f"{root_path}/confirm1.png", master=top4)
 
         button3 = tk.Button(top4, text="Start Recording", image=startIcon, compound="left", padx=40, bg="grey35",
                             activebackground="#1CCA3C", fg="White", activeforeground="white",
@@ -2684,7 +2685,7 @@ def confirm_fields(start_stop):
 
     global header_list
     if start_stop == 'start' or start_stop == 'stop':
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             header_list = []
             for row in headreader:
@@ -4168,7 +4169,7 @@ def stop_recording():
     else:
         time_elapsed = strfdelta(time_elapsed, "{hours} hours {minutes} minutes {seconds} seconds")
 
-    with open('./Header_default.csv', newline='') as t:
+    with open(f'{root_path}/Header_default.csv', newline='') as t:
         headreader = csv.reader(t)
         global header_list
         header_list = []
@@ -4283,7 +4284,7 @@ def exportH2O(startscreen):
         # H2OxbReset = xx1
         # O2xbReset = xx2
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             headerdata = []
             for row in headreader:
@@ -4297,7 +4298,7 @@ def exportH2O(startscreen):
         h2obMaxEdit = str(round(max(H2Oyb), 1))
         h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             headerdata = []
             for row in headreader:
@@ -4336,7 +4337,7 @@ def exportH2O(startscreen):
 
     pdf.add_page()
     pdf.image("PDFpltH2O.png", x=0, y=35, w=217, h=116)
-    pdf.image('./QAM-Letter12.gif', x=10, y=10, w=120,
+    pdf.image(f'{root_path}/QAM-Letter12.gif', x=10, y=10, w=120,
               h=24)  # ------- ADJUST THE FILEPATH BASED ON WHERE THE IMAGE IS LOCATED
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=10, y=11, w=52, h=20)
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=80, y=7, w=50, h=20)
@@ -4494,7 +4495,7 @@ def exportO2(startscreen):
         # H2OxbReset = xx1
         # O2xbReset = xx2
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             headerdata = []
             for row in headreader:
@@ -4508,7 +4509,7 @@ def exportO2(startscreen):
         o2bMaxEdit = str(round(max(O2yb), 1))
         o2bFinalEdit = str(round(O2yb[-1], 1))
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             headerdata = []
             for row in headreader:
@@ -4542,7 +4543,7 @@ def exportO2(startscreen):
     pdf.set_font("Arial", size=12)
     pdf.add_page()
     pdf.image("PDFpltO2.png", x=0, y=35, w=217, h=116)
-    pdf.image('./QAM-Letter12.gif', x=10, y=10, w=120,
+    pdf.image(f'{root_path}/QAM-Letter12.gif', x=10, y=10, w=120,
               h=24)  # ------- ADJUST THE FILEPATH BASED ON WHERE THE IMAGE IS LOCATED
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=10, y=11, w=52, h=20)
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=80, y=7, w=50, h=20)
@@ -4813,7 +4814,7 @@ def exportBoth(startscreen):
         # H2OxbReset = xx1
         # O2xbReset = xx2
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             headerdata = []
             for row in headreader:
@@ -4835,7 +4836,7 @@ def exportBoth(startscreen):
         o2bMaxEdit = str(round(max(O2yb), 1))
         o2bFinalEdit = str(round(O2yb[-1], 1))
 
-        with open('./Header_default.csv', newline='') as t:
+        with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
             headerdata = []
             for row in headreader:
@@ -4892,7 +4893,7 @@ def exportBoth(startscreen):
     pdf.set_font("Arial", size=12)
     pdf.add_page()
     pdf.image("PDFpltO2.png", x=0, y=35, w=217, h=116)
-    pdf.image('./QAM-Letter12.gif', x=10, y=10, w=120,
+    pdf.image(f'{root_path}/QAM-Letter12.gif', x=10, y=10, w=120,
               h=24)  # ------- ADJUST THE FILEPATH BASED ON WHERE THE IMAGE IS LOCATED
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=10, y=11, w=52, h=20)
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=80, y=7, w=50, h=20)
@@ -5023,7 +5024,7 @@ def exportBoth(startscreen):
 
     pdf.add_page()
     pdf.image("PDFpltH2O.png", x=0, y=35, w=217, h=116)
-    pdf.image('./QAM-Letter12.gif', x=10, y=10, w=120,
+    pdf.image(f'{root_path}/QAM-Letter12.gif', x=10, y=10, w=120,
               h=24)  # ------- ADJUST THE FILEPATH BASED ON WHERE THE IMAGE IS LOCATED
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=10, y=11, w=52, h=20)
     # pdf.image('//Mac/Home/Downloads/QAMletter2.jpg', x=80, y=7, w=50, h=20)
@@ -6146,7 +6147,7 @@ def manage_pdf():
     # --------------------------------------------
     # QAM LOGO
     # --------------------------------------------
-    QAMmd = Image.open('./QAM.gif')
+    QAMmd = Image.open(f'{root_path}/QAM.gif')
     imgSplash = ImageTk.PhotoImage(QAMmd, master=root)
     imgg = tk.Label(root, image=imgSplash, borderwidth=0, highlightthickness=0)
     imgg.image = imgSplash
@@ -6155,8 +6156,8 @@ def manage_pdf():
     # --------------------------------------------
     # BUTTON IMAGES
     # --------------------------------------------
-    dashIcon = ImageTk.PhotoImage(file=r"./dashboard.png", master=root)
-    folderIcon = ImageTk.PhotoImage(file=r"./foldersolid.png", master=root)
+    dashIcon = ImageTk.PhotoImage(file=f"{root_path}/dashboard.png", master=root)
+    folderIcon = ImageTk.PhotoImage(file=f"{root_path}/foldersolid.png", master=root)
 
     tk.Button(root, text="Select Folder", font=("century gothic", 50, "bold"), fg="white", activeforeground="white",
               bg="#ff9500", activebackground="#ffab34", image=folderIcon, compound="left", padx=30,
@@ -6169,7 +6170,11 @@ def manage_pdf():
 
     root.mainloop()
 
+
 if __name__ == '__main__':
+    global root_path
+    root_path = os.path.dirname(os.path.abspath(__file__))
+
     app = RPiReader()
     ani1 = animation.FuncAnimation(f1, animateo2, interval=intervalO2)
     ani2 = animation.FuncAnimation(f2, animateh2o, interval=intervalH2O)
