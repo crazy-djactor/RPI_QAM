@@ -2,6 +2,27 @@
 import binascii
 
 
+def strfdelta(tdelta, fmt):
+    d = {"days": tdelta.days}
+    d["hours"], rem = divmod(tdelta.seconds, 3600)
+    d["minutes"], d["seconds"] = divmod(rem, 60)
+    return fmt.format(**d)
+
+
+def time_elapsed_string(time_duration):
+    _days = strfdelta(time_duration, "{days}")
+    _hours = strfdelta(time_duration, "{hours}")
+    _mins = strfdelta(time_duration, "{minutes}")
+
+    if _days != '0':
+        time_elapsed = strfdelta(time_duration, "{days} {hours} hours {minutes} minutes")
+    else:
+        if _hours != '0':
+            time_elapsed = strfdelta(time_duration, "{hours} hours {minutes} minutes")
+        else:
+            time_elapsed = strfdelta(time_duration, "{minutes} minutes")
+    return time_elapsed
+
 def raw_to_ppb(data):
     raw_hex = str(binascii.hexlify(data[2:]))
     c = [raw_hex[i:i + 2] for i in range(0, len(raw_hex), 2)]

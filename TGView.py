@@ -5,7 +5,7 @@ import matplotlib
 
 from AdjustFigure import AdjustFigure
 from GlobalConst import dir_TGView, root_path
-from Util import raw_to_ppb
+from Util import raw_to_ppb, strfdelta, time_elapsed_string
 from component.PopupWindow import PopupWindow
 
 matplotlib.use("TkAgg")
@@ -1003,7 +1003,7 @@ class StartPage(tk.Frame):
         # Show Current O2 Reading
         global labelO2
         labelO2 = tk.Label(self, text="Current O2:", font=SMALL_FONT)
-        labelO2.place(x=400, y=805)
+        labelO2.place(x=400, y=820)
         labelO2.config(bg="grey35", fg="white")
         #
         global currento2
@@ -1012,12 +1012,12 @@ class StartPage(tk.Frame):
         global labelO2_value
         labelO2_value = tk.Label(self, textvariable=currento2, width=6, bg="grey35", fg="#60D500",
                                  font=('calibri', 20, 'bold'))
-        labelO2_value.place(x=600, y=802)
+        labelO2_value.place(x=600, y=815)
 
         # Show Current H2O Reading
         global labelH2O, labelH2O_value
         labelH2O = tk.Label(self, text="Current H2O:", font=SMALL_FONT)
-        labelH2O.place(x=1350, y=805)
+        labelH2O.place(x=1350, y=820)
         labelH2O.config(bg="grey35", fg="white")
 
         global currenth2o
@@ -1026,7 +1026,7 @@ class StartPage(tk.Frame):
             currenth2o = 0
         labelH2O_value = tk.Label(self, textvariable=currenth2o, width=6, bg="grey35", fg="#00BFFF",
                                   font=('calibri', 20, 'bold'))
-        labelH2O_value.place(x=1550, y=802)
+        labelH2O_value.place(x=1550, y=815)
 
 
 ##### Global Methods #####
@@ -1837,19 +1837,7 @@ class PageOne(tk.Frame):
 
         global time_elapsed
         time_elapsed = stop_time - start_time
-
-        def strfdelta(tdelta, fmt):
-            d = {"days": tdelta.days}
-            d["hours"], rem = divmod(tdelta.seconds, 3600)
-            d["minutes"], d["seconds"] = divmod(rem, 60)
-            return fmt.format(**d)
-
-        if strfdelta(time_elapsed, "{hours}") == '0' and strfdelta(time_elapsed, "{minutes}") == '0':
-            time_elapsed = strfdelta(time_elapsed, "{seconds} seconds")
-        elif strfdelta(time_elapsed, "{hours}") == '0':
-            time_elapsed = strfdelta(time_elapsed, "{minutes} minutes ")
-        else:
-            time_elapsed = strfdelta(time_elapsed, "{hours} hours {minutes} minutes")
+        time_elapsed = time_elapsed_string(time_elapsed)
 
         if var2.get() != 'radH2O':
             global o2MeanValue
@@ -4162,19 +4150,8 @@ def stop_recording():
 
     global time_elapsed
     time_elapsed = stop_time - start_time
+    time_elapsed = time_elapsed_string(time_elapsed)
 
-    def strfdelta(tdelta, fmt):
-        d = {"days": tdelta.days}
-        d["hours"], rem = divmod(tdelta.seconds, 3600)
-        d["minutes"], d["seconds"] = divmod(rem, 60)
-        return fmt.format(**d)
-
-    if strfdelta(time_elapsed, "{hours}") == '0' and strfdelta(time_elapsed, "{minutes}") == '0':
-        time_elapsed = strfdelta(time_elapsed, "{seconds} seconds")
-    elif strfdelta(time_elapsed, "{hours}") == '0':
-        time_elapsed = strfdelta(time_elapsed, "{minutes} minutes {seconds} seconds")
-    else:
-        time_elapsed = strfdelta(time_elapsed, "{hours} hours {minutes} minutes {seconds} seconds")
 
     with open(f'{root_path}/Header_default.csv', newline='') as t:
         headreader = csv.reader(t)
@@ -5448,20 +5425,8 @@ def manage_pdf():
                 global newTime_durationO2
 
                 newTime_durationO2 = newStopTimeO2 - newStartTimeO2
+                newTime_durationO2 = time_elapsed_string(newTime_durationO2)
 
-                def strfdelta(tdelta, fmt):
-                    d = {"days": tdelta.days}
-                    d["hours"], rem = divmod(tdelta.seconds, 3600)
-                    d["minutes"], d["seconds"] = divmod(rem, 60)
-                    return fmt.format(**d)
-
-                if strfdelta(newTime_durationO2, "{hours}") == '0' and strfdelta(newTime_durationO2,
-                                                                                 "{minutes}") == '0':
-                    newTime_durationO2 = strfdelta(newTime_durationO2, "{seconds} seconds")
-                elif strfdelta(newTime_durationO2, "{hours}") == '0':
-                    newTime_durationO2 = strfdelta(newTime_durationO2, "{minutes} minutes ")
-                else:
-                    newTime_durationO2 = strfdelta(newTime_durationO2, "{hours} hours {minutes} minutes")
                 tk.Label(top, text=newTime_durationO2, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=O2durationXfield, y=O2durationYfield)
                 tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
@@ -5614,19 +5579,8 @@ def manage_pdf():
                 global newTime_durationH2O
                 newTime_durationH2O = newStopTime - newStartTime
 
-                def strfdelta(tdelta, fmt):
-                    d = {"days": tdelta.days}
-                    d["hours"], rem = divmod(tdelta.seconds, 3600)
-                    d["minutes"], d["seconds"] = divmod(rem, 60)
-                    return fmt.format(**d)
+                newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
 
-                if strfdelta(newTime_durationH2O, "{hours}") == '0' and strfdelta(newTime_durationH2O,
-                                                                                  "{minutes}") == '0':
-                    newTime_durationH2O = strfdelta(newTime_durationH2O, "{seconds} seconds")
-                elif strfdelta(newTime_durationH2O, "{hours}") == '0':
-                    newTime_durationH2O = strfdelta(newTime_durationH2O, "{minutes} minutes ")
-                else:
-                    newTime_durationH2O = strfdelta(newTime_durationH2O, "{hours} hours {minutes} minutes")
                 tk.Label(top, text=newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=H2OdurationXfield, y=H2OdurationYfield)
                 tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
@@ -5871,20 +5825,8 @@ def manage_pdf():
 
                 global newTime_durationH2O
                 newTime_durationH2O = newStopTime - newStartTime
+                newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
 
-                def strfdelta(tdelta, fmt):
-                    d = {"days": tdelta.days}
-                    d["hours"], rem = divmod(tdelta.seconds, 3600)
-                    d["minutes"], d["seconds"] = divmod(rem, 60)
-                    return fmt.format(**d)
-
-                if strfdelta(newTime_durationH2O, "{hours}") == '0' and strfdelta(newTime_durationH2O,
-                                                                                  "{minutes}") == '0':
-                    newTime_durationH2O = strfdelta(newTime_durationH2O, "{seconds} seconds")
-                elif strfdelta(newTime_durationH2O, "{hours}") == '0':
-                    newTime_durationH2O = strfdelta(newTime_durationH2O, "{minutes} minutes ")
-                else:
-                    newTime_durationH2O = strfdelta(newTime_durationH2O, "{hours} hours {minutes} minutes")
                 tk.Label(top, text=newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=H2OdurationXfield, y=H2OdurationYfield)
                 tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
@@ -5953,20 +5895,8 @@ def manage_pdf():
                 global newTime_durationO2
 
                 newTime_durationO2 = newStopTimeO2 - newStartTimeO2
+                newTime_durationO2 = time_elapsed_string(newTime_durationO2)
 
-                def strfdelta(tdelta, fmt):
-                    d = {"days": tdelta.days}
-                    d["hours"], rem = divmod(tdelta.seconds, 3600)
-                    d["minutes"], d["seconds"] = divmod(rem, 60)
-                    return fmt.format(**d)
-
-                if strfdelta(newTime_durationO2, "{hours}") == '0' and strfdelta(newTime_durationO2,
-                                                                                 "{minutes}") == '0':
-                    newTime_durationO2 = strfdelta(newTime_durationO2, "{seconds} seconds")
-                elif strfdelta(newTime_durationO2, "{hours}") == '0':
-                    newTime_durationO2 = strfdelta(newTime_durationO2, "{minutes} minutes ")
-                else:
-                    newTime_durationO2 = strfdelta(newTime_durationO2, "{hours} hours {minutes} minutes")
                 tk.Label(top, text=newTime_durationO2, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=O2durationXfield, y=O2durationYfield)
                 tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
