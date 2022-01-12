@@ -1591,7 +1591,7 @@ def confirm_fields():
         ### analyser info entries
         ## delta f info entry
         #deltaf serial number entry
-        label10 = tk.Label(top4, text="Delta F", font=LARGE_FONT)
+        label10 = tk.Label(top4, text="Servomex", font=LARGE_FONT)
         label10.grid(row=2,column=2, padx=paddx,pady=paddy)
         label10.config(bg="grey25", fg="#7fa6a3")
         

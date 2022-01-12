@@ -4,7 +4,9 @@ from contextlib import suppress
 import matplotlib
 
 from AdjustFigure import AdjustFigure
+from GlobalConst import dir_TGView, root_path
 from Util import raw_to_ppb
+from component.PopupWindow import PopupWindow
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -60,7 +62,6 @@ QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
 #### initial animation intervals are adjusted later###
 intervalO2 = 3500
 intervalH2O = 3500
-global root_path
 
 
 #### ~lines0-500 are serial communication functions ###
@@ -749,7 +750,6 @@ class RPiReader(tk.Tk):
         self.show_frame(StartPage)
 
     def show_frame(self, cont):
-
         frame = self.frames[cont]
         frame.tkraise()
 
@@ -1343,6 +1343,7 @@ class AnalyzerFieldsScreen(tk.Frame):
 
         def back_and_update_fields():
             controller.show_frame(StartPage)
+
             update_fields()
 
         savecIcon = ImageTk.PhotoImage(file=f"{root_path}/SaveC.png", master=self)
@@ -1649,7 +1650,7 @@ class PageOne(tk.Frame):
         start_dateRec.set(start_time.strftime("%-m/%-d/%y"))
 
         global directory
-        directory = '/home/pi/TGView'
+        directory = dir_TGView
         padx = 300
         pady = 120
         graphXfield = 10  # 110
@@ -1705,10 +1706,8 @@ class PageOne(tk.Frame):
 
         def stopTest_andshowStartPage():
             controller.show_frame(StartPage)
-
             if 'o2Valuelist' in globals() or 'h2oValuelist' in globals():
                 self.stop()
-                top45.destroy()
 
         padx = 630
         pady = 835
@@ -1756,9 +1755,9 @@ class PageOne(tk.Frame):
         '''
 
         ##### TESTING SCREEN DATA
-        padx = 785
-        pady = 730
-        padyy = 760
+        padx = 755
+        pady = 685
+        padyy = 715
         testingPadX = 200
         m = 0
         multiplier = 2.3
@@ -1881,7 +1880,7 @@ class PageOne(tk.Frame):
             h2oFinalValueVar = StringVar(value=h2oFinalValue)
 
         global path
-        directory = "/home/pi/TGView"
+        directory = dir_TGView
         path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
             header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
         global pathF
@@ -1918,110 +1917,74 @@ class PageOne(tk.Frame):
 
 #### STOP CONFIRMATION WINDOW
 def stop_confirm():
-    confirmFont = "lato"
+    params = {
+        "text_yes": "Are you sure you want to stop the test?",
+        "title": "Please Confirm",
+        "command_yes": stopTest_andshowStartPage
+    }
 
-    paddx = 15
-    paddy = 15
-    global top45
-    top45 = Toplevel()
-    # topA.attributes('-type', 'Dock')
-    top45.title("Please Confirm")
-    top45.configure(background="grey25")
-    # Width and height for the Tk root window
-    w = 720
-    h = 465
-    # This gets the current screen width and height
-    ws = top45.winfo_screenwidth()
-    hs = top45.winfo_screenheight()
-    # Calculate the x and y coordinates based on the current screen size
-    sx = (ws / 2) - (w / 2)
-    sy = (hs / 2) - (h / 2)
-    # Open the root window in the middle of the screen
-    # topA.overrideredirect(True)
-    top45.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
-    paddy = 5
-
-    ##### Ask the question
-    label4 = tk.Label(top45, text="Are you sure you want to stop the test?", bg="grey25", fg='white',
-                      font=(confirmFont, 40, 'bold'), wraplength=550)
-    label4.place(relx=.5, rely=.29, anchor="center")
-
-    ##### equipment controls title
-    # label1 = tk.Label(top45, text="Doing so will delete all data for this test.",bg="grey25", fg = QAM_GREEN, font=(confirmFont,40,'bold'))
-    # label1.place(relx=.5, rely=.43, anchor="center")
-
-    # label2 = tk.Label(top45, text=version_num,bg="grey25", fg = "white", font=(confirmFont,40,'bold'))
-    # label2.place(relx=.5, rely=.56, anchor="center")
-
-    ## Button image
-    # likeIcon = ImageTk.PhotoImage(file = r"./like.png", master=top45)
-
-    # YES button
-    button1 = tk.Button(top45, text="Yes", compound="left", padx=30, activebackground="#678277", bg="grey35",
-                        highlightbackground="#678277", highlightthickness=2, relief="flat", activeforeground="white",
-                        fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1',
-                        command=stopTest_andshowStartPage)  # command=stopTest_andshowStartPage)
-    button1.place(width=270, height=95, relx=.3, rely=.72, anchor="center")
-
-    # NO button
-    button2 = tk.Button(top45, text="No", compound="left", padx=30, activebackground="IndianRed", bg="grey35",
-                        highlightbackground="IndianRed", highlightthickness=2, relief="flat", activeforeground="white",
-                        fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=top45.destroy)
-    button2.place(width=270, height=95, relx=.7, rely=.72, anchor="center")
-
+    confirm_window = PopupWindow(params)
 
 #### DELETE CONFIRMATION WINDOW
 def delete_confirm():
-    confirmFont = "lato"
+    params = {
+        "text_yes": "Are you sure you want to delete this report?\n(This will delete the folder and all testing data)",
+        "title": "Please Confirm",
+        "command_yes": delete_test
+    }
 
-    paddx = 15
-    paddy = 15
-    global top46
-    top46 = Toplevel()
-    # topA.attributes('-type', 'Dock')
-    top46.title("Please Confirm")
-    top46.configure(background="grey25")
-    # Width and height for the Tk root window
-    w = 720
-    h = 465
-    # This gets the current screen width and height
-    ws = top46.winfo_screenwidth()
-    hs = top46.winfo_screenheight()
-    # Calculate the x and y coordinates based on the current screen size
-    sx = (ws / 2) - (w / 2)
-    sy = (hs / 2) - (h / 2)
-    # Open the root window in the middle of the screen
-    # topA.overrideredirect(True)
-    top46.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
-    paddy = 5
+    confirm_delete = PopupWindow(params)
 
-    ##### Ask the question
-    label4 = tk.Label(top46, text="Are you sure you want to delete this report?", bg="grey25", fg='white',
-                      font=(confirmFont, 40, 'bold'), wraplength=550)
-    label4.place(relx=.5, rely=.27, anchor="center")
-
-    ##### equipment controls title
-    label1 = tk.Label(top46, text="(This will delete the folder and all testing data)", bg="grey25", fg='orange',
-                      font=(confirmFont, 17, 'bold'))
-    label1.place(relx=.5, rely=.52, anchor="center")
-
-    # label2 = tk.Label(top45, text=version_num,bg="grey25", fg = "white", font=(confirmFont,40,'bold'))
-    # label2.place(relx=.5, rely=.56, anchor="center")
-
-    ## Button image
-    # likeIcon = ImageTk.PhotoImage(file = r"./like.png", master=top45)
-
-    # YES button
-    button1 = tk.Button(top46, text="Yes", compound="left", padx=30, activebackground="#678277", bg="grey35",
-                        highlightbackground="#678277", highlightthickness=2, relief="flat", activeforeground="white",
-                        fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=delete_test)
-    button1.place(width=270, height=95, relx=.3, rely=.77, anchor="center")
-
-    # NO button
-    button2 = tk.Button(top46, text="No", compound="left", padx=30, activebackground="IndianRed", bg="grey35",
-                        highlightbackground="IndianRed", highlightthickness=2, relief="flat", activeforeground="white",
-                        fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=top46.destroy)
-    button2.place(width=270, height=95, relx=.7, rely=.77, anchor="center")
+    # confirmFont = "lato"
+    #
+    # paddx = 15
+    # paddy = 15
+    # global top46
+    # top46 = Toplevel()
+    # # topA.attributes('-type', 'Dock')
+    # top46.title("Please Confirm")
+    # top46.configure(background="grey25")
+    # # Width and height for the Tk root window
+    # w = 720
+    # h = 465
+    # # This gets the current screen width and height
+    # ws = top46.winfo_screenwidth()
+    # hs = top46.winfo_screenheight()
+    # # Calculate the x and y coordinates based on the current screen size
+    # sx = (ws / 2) - (w / 2)
+    # sy = (hs / 2) - (h / 2)
+    # # Open the root window in the middle of the screen
+    # # topA.overrideredirect(True)
+    # top46.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
+    # paddy = 5
+    #
+    # ##### Ask the question
+    # label4 = tk.Label(top46, text="Are you sure you want to delete this report?", bg="grey25", fg='white',
+    #                   font=(confirmFont, 40, 'bold'), wraplength=550)
+    # label4.place(relx=.5, rely=.27, anchor="center")
+    #
+    # ##### equipment controls title
+    # label1 = tk.Label(top46, text="(This will delete the folder and all testing data)", bg="grey25", fg='orange',
+    #                   font=(confirmFont, 17, 'bold'))
+    # label1.place(relx=.5, rely=.52, anchor="center")
+    #
+    # # label2 = tk.Label(top45, text=version_num,bg="grey25", fg = "white", font=(confirmFont,40,'bold'))
+    # # label2.place(relx=.5, rely=.56, anchor="center")
+    #
+    # ## Button image
+    # # likeIcon = ImageTk.PhotoImage(file = r"./like.png", master=top45)
+    #
+    # # YES button
+    # button1 = tk.Button(top46, text="Yes", compound="left", padx=30, activebackground="#678277", bg="grey35",
+    #                     highlightbackground="#678277", highlightthickness=2, relief="flat", activeforeground="white",
+    #                     fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=delete_test)
+    # button1.place(width=270, height=95, relx=.3, rely=.77, anchor="center")
+    #
+    # # NO button
+    # button2 = tk.Button(top46, text="No", compound="left", padx=30, activebackground="IndianRed", bg="grey35",
+    #                     highlightbackground="IndianRed", highlightthickness=2, relief="flat", activeforeground="white",
+    #                     fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=top46.destroy)
+    # button2.place(width=270, height=95, relx=.7, rely=.77, anchor="center")
 
 
 def confirm_fields(start_stop):
@@ -2043,11 +2006,11 @@ def confirm_fields(start_stop):
 
     if start_stop == 'start':
         label1 = tk.Label(top4, text="Enter Test Parameters", font=LARGEST_FONT)
-        label1.place(x=260, y=30)
+        label1.place(x=210, y=30)
         label1.config(bg="grey25", fg=QAM_GREEN)
     if start_stop == 'stop' or start_stop == 'manage':
         label1 = tk.Label(top4, text="Verify Report Information", font=LARGEST_FONT)
-        label1.place(x=210, y=10)
+        label1.place(x=110, y=10)
         label1.config(bg="grey25", fg=QAM_GREEN)
     # fg="#7fa6a3"
 
@@ -2067,7 +2030,6 @@ def confirm_fields(start_stop):
         global recording
         red_green = 'green'
         on_off = "Recording"
-        recording = True
 
         global start_time
         start_time = datetime.now()
@@ -2142,6 +2104,7 @@ def confirm_fields(start_stop):
 
         top4.destroy()
 
+        recording = True
         # --------------------------------------#
         #           Delete Test Button         #
         # --------------------------------------#
@@ -2366,7 +2329,7 @@ def confirm_fields(start_stop):
 
         i = 0
 
-        os.chdir("/home/pi/TGView")
+        os.chdir(dir_TGView)
 
         #### get new header_list from fields in confirm_fields
         global header_list
@@ -2397,7 +2360,7 @@ def confirm_fields(start_stop):
         header_list.append(tracer_spec.get())
 
         global path
-        directory = "/home/pi/TGView"
+        directory = dir_TGView
         if start_stop == 'stop':
             path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
                 header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
@@ -2868,7 +2831,7 @@ def confirm_fields(start_stop):
     label10.place(x=xfield + paddx, y=Ly + paddy * i + yfield)
     label10.config(bg="grey25", fg="white")
 
-    top4.deltaf_name = StringVar(top4, value="Delta F")
+    top4.deltaf_name = StringVar(top4, value="Servomex")
     top4.textbox = ttk.Entry(top4, width=20, textvariable=top4.deltaf_name, font=SMALLER_FONT, state='readonly')
     top4.textbox.place(x=xfield + paddx, y=Ty + paddy * i + yfield)
     i = i + 1
@@ -4219,7 +4182,7 @@ def stop_recording():
         header_list = []
         for row in headreader:
             header_list.append(row[0])
-    directory = "/home/pi/TGView"
+    directory = dir_TGView
     path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
         header_list[0]) + "_" + stop_timeet
     global pathF
@@ -4511,7 +4474,7 @@ def exportH2O(startscreen):
     pdfpath = pathF + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
-    os.chdir("/home/pi/TGView")
+    os.chdir(dir_TGView)
     # print("evince " + pdfpath)
     os.popen("evince " + "'" + pdfpath + "'")
 
@@ -4715,7 +4678,7 @@ def exportO2(startscreen):
     pdfpath = pathF + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
-    os.chdir("/home/pi/TGView")
+    os.chdir(dir_TGView)
     # print("evince " + pdfpath)
     os.popen("evince " + "'" + pdfpath + "'")
     '''
@@ -5204,7 +5167,7 @@ def exportBoth(startscreen):
     pdfpath = pathF + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
-    os.chdir("/home/pi/TGView")
+    os.chdir(dir_TGView)
     # print("evince " + pdfpath)
     os.popen("evince " + "'" + pdfpath + "'")
 
@@ -5224,7 +5187,7 @@ def manage_pdf():
     # print(os.getcwd())
 
     # Filepath for Pi (Linux) testing
-    os.chdir("/home/pi/TGView")  # -------(CHANGE THIS TO WORK WITH THE CURRENT COMPUTER)
+    os.chdir(dir_TGView)  # -------(CHANGE THIS TO WORK WITH THE CURRENT COMPUTER)
 
     global TestingIncValue
     TestingIncValue = 1  # -------(THIS CONTROLS HOW OFTEN DATA IS COLLECTED AND PLOTTED)
@@ -6216,9 +6179,6 @@ def manage_pdf():
 
 
 if __name__ == '__main__':
-    global root_path
-    root_path = os.path.dirname(os.path.abspath(__file__))
-
     app = RPiReader()
     ani1 = animation.FuncAnimation(f1, animateo2, interval=intervalO2)
     ani2 = animation.FuncAnimation(f2, animateh2o, interval=intervalH2O)

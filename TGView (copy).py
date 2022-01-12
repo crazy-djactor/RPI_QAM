@@ -2873,7 +2873,7 @@ def confirm_fields(start_stop):
     label10.place(x=xfield + paddx, y=Ly + paddy * i + yfield)
     label10.config(bg="grey25", fg="white")
 
-    top4.deltaf_name = StringVar(top4, value="Delta F")
+    top4.deltaf_name = StringVar(top4, value="Servomex")
     top4.textbox = ttk.Entry(top4, width=20, textvariable=top4.deltaf_name, font=SMALLER_FONT, state='readonly')
     top4.textbox.place(x=xfield + paddx, y=Ty + paddy * i + yfield)
     i = i + 1
