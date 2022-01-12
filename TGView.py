@@ -554,24 +554,17 @@ style.use("seaborn-whitegrid")
 global a1, a2, a3
 # global f1, f2
 figure_conf = AdjustFigure.default_figure_conf()
-ext_figure_conf = AdjustFigure.ext_figure_conf()
 
 f1 = Figure(figsize=(figure_conf['w'], figure_conf['h']), dpi=figure_conf['dpi'],
             facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
 f2 = Figure(figsize=(figure_conf['w'], figure_conf['h']), dpi=figure_conf['dpi'],
             facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
-f3 = Figure(figsize=(ext_figure_conf['w'], ext_figure_conf['h']), dpi=ext_figure_conf['dpi'],
-            facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
 
 # Testing a combined figure with two subplots 9/3/2020
-# f3 = Figure(figsize=(7,3),dpi=200, facecolor=(0.35,0.35,0.35))
-# a3 = f3.add_subplot(211,facecolor=(0.25,0.25,0.25))
 
 a1 = f1.add_subplot(111, facecolor=(0.25, 0.25, 0.25))  # (121,
 a2 = f2.add_subplot(111, facecolor=(0.25, 0.25, 0.25))  # f1 (122,
-a3 = f3.add_subplot(111, facecolor=(0.25, 0.25, 0.25))  # f1 (122,
 
-f3.subplots_adjust(left=0.13, right=0.95, bottom=0.19, top=0.93, hspace=0.3)
 f2.subplots_adjust(left=0.13, right=0.95, bottom=0.19, top=0.93, hspace=0.3)
 f1.subplots_adjust(left=0.13, right=0.95, bottom=0.19, top=0.93, hspace=0.3)
 # f1.set_tight_layout(True)
@@ -3587,17 +3580,17 @@ def replace_images():
     if var2.get() == 'radBoth':
         if place_info_img.get('x') != 20:
             img.place(x=20, y=200)
-            labelO2.place(x=400, y=805)
-            labelO2_value.place(x=600, y=802)
+            labelO2.place(x=400, y=820)
+            labelO2_value.place(x=600, y=815)
         if place_info_img3.get('x') != 970:
             img3.place(x=970, y=200)
-            labelH2O.place(x=1350, y=805)
-            labelH2O_value.place(x=1550, y=802)
+            labelH2O.place(x=1350, y=820)
+            labelH2O_value.place(x=1550, y=815)
     elif var2.get() == 'radH2O':
         if place_info_img3.get('x') != 970:
             img3.place(x=20, y=200)
-            labelH2O.place(x=880, y=805)
-            labelH2O_value.place(x=1080, y=802)
+            labelH2O.place(x=880, y=820)
+            labelH2O_value.place(x=1080, y=815)
             img.place_forget()
             labelO2.place_forget()
             labelO2_value.place_forget()
@@ -3605,8 +3598,8 @@ def replace_images():
         if place_info_img.get('x') != 20:
             img.place(x=20, y=200)
             img3.place_forget()
-            labelO2.place(x=880, y=805)
-            labelO2_value.place(x=1080, y=802)
+            labelO2.place(x=880, y=820)
+            labelO2_value.place(x=1080, y=815)
             labelH2O.place_forget()
             labelH2O_value.place_forget()
 
@@ -3864,9 +3857,6 @@ def animateh2o(i):
 
         if var2.get() == 'radH2O':
             plot_axes_h2o(h2oxList, h2oyList, a2)
-            a3.clear()
-            a3.ticklabel_format(useOffset=False)
-            plot_axes_h2o(h2oxList, h2oyList, a3)
 
         h2ofileTitle = "H2O"
 
@@ -3882,20 +3872,22 @@ def animateh2o(i):
 
                 h.flush()
         try:
-            basewidth = 920
+            figure_conf = AdjustFigure.default_figure_conf()
+            fig_width, fig_height = f2.get_size_inches()
             if var2.get() == 'radH2O':
-                f3.savefig('graphH2O.png', facecolor=f3.get_facecolor(), edgecolor="none")
-                basewidth = 920 * 2
-            else:
-                f2.savefig('graphH2O.png', facecolor=f2.get_facecolor(), edgecolor="none")
+                figure_conf = AdjustFigure.ext_figure_conf()
+            if fig_width != figure_conf['w']:
+                f2.set_size_inches(figure_conf['w'], figure_conf['h'])
+
+            f2.savefig('graphH2O.png', facecolor=f2.get_facecolor(), edgecolor="none")
             global img3
 
-            imgh = Image.open('graphH2O.png')
-            wpercent = (basewidth / float(imgh.size[0]))
-            hsize = int((float(imgh.size[1]) * float(wpercent) * .92))  # 0.84
-            imgh = imgh.resize((basewidth, hsize), Image.ANTIALIAS)
-
-            imgh.save('graphH2O.png')
+            # imgh = Image.open('graphH2O.png')
+            # wpercent = (basewidth / float(imgh.size[0]))
+            # hsize = int((float(imgh.size[1]) * float(wpercent) * .92))  # 0.84
+            # imgh = imgh.resize((basewidth, hsize), Image.ANTIALIAS)
+            #
+            # imgh.save('graphH2O.png')
             img4 = ImageTk.PhotoImage(Image.open('graphH2O.png'))
             img3.configure(image=img4)
             img3.image = img4
@@ -4107,9 +4099,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             markerStyle = '.'
             if var2.get() == 'radO2':
                 plot_axes_o2(o2xList, o2yList, a1)
-                a3.clear()
-                a3.ticklabel_format(useOffset=False)
-                plot_axes_o2(o2xList, o2yList, a3)
                 # o2xMax = max(o2xList)
                 # if o2data_min < 0:
                 #     a1.set_ylim(o2data_min - 10, o2data_max + 10)
@@ -4170,21 +4159,21 @@ def animateo2(i):  #### animation function. despite the name it actually animate
 
                     o.flush()
         try:
-
-            basewidth = 920
-
+            figure_conf = AdjustFigure.default_figure_conf()
+            fig_width, fig_height = f1.get_size_inches()
             if var2.get() == 'radO2':
-                f1.set_size_inches(9.4, 3.67)
-                f1.savefig('graphO2.png', facecolor=f1.get_facecolor(), edgecolor="none")
-                basewidth = basewidth * 2
-            else:
-                f1.savefig('graphO2.png', facecolor=f1.get_facecolor(), edgecolor="none")
+                figure_conf = AdjustFigure.ext_figure_conf()
 
-            imgg = Image.open('graphO2.png')
-            wpercent = (basewidth / float(imgg.size[0]))
-            hsize = int((float(imgg.size[1]) * float(wpercent) * 0.92))  # 0.84
-            imgg = imgg.resize((basewidth, hsize), Image.ANTIALIAS)
-            imgg.save('graphO2.png')
+            if fig_width != figure_conf['w']:
+                f1.set_size_inches(figure_conf['w'], figure_conf['h'])
+            # basewidth = figure_conf['w']*figure_conf['dpi']
+
+            f1.savefig('graphO2.png', facecolor=f1.get_facecolor(), edgecolor="none")
+            # imgg = Image.open('graphO2.png')
+            # wpercent = (basewidth / float(imgg.size[0]))
+            # hsize = int((float(imgg.size[1]) * float(wpercent) * 0.92))  # 0.84
+            # imgg = imgg.resize((basewidth, hsize), Image.ANTIALIAS)
+            # imgg.save('graphO2.png')
             img2 = ImageTk.PhotoImage(Image.open('graphO2.png'))
             img.configure(image=img2)
             img.image = img2
