@@ -4,7 +4,6 @@ from contextlib import suppress
 import matplotlib
 
 from AdjustFigure import AdjustFigure
-from Util import raw_to_ppb
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -530,6 +529,8 @@ def get_h20(comPortMoist):
     ser.close()
 
 
+
+
 #####GUI
 
 # assign font for final PDF graphs
@@ -556,12 +557,9 @@ global a1, a2, a3
 figure_conf = AdjustFigure.default_figure_conf()
 ext_figure_conf = AdjustFigure.ext_figure_conf()
 
-f1 = Figure(figsize=(figure_conf['w'], figure_conf['h']), dpi=figure_conf['dpi'],
-            facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
-f2 = Figure(figsize=(figure_conf['w'], figure_conf['h']), dpi=figure_conf['dpi'],
-            facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
-f3 = Figure(figsize=(ext_figure_conf['w'], ext_figure_conf['h']), dpi=ext_figure_conf['dpi'],
-            facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
+f1 = Figure(figsize=(figure_conf['w'], figure_conf['h']), dpi=figure_conf['dpi'], facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
+f2 = Figure(figsize=(figure_conf['w'], figure_conf['h']), dpi=figure_conf['dpi'], facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
+f3 = Figure(figsize=(ext_figure_conf['w'], ext_figure_conf['h']), dpi=ext_figure_conf['dpi'], facecolor=(0.35, 0.35, 0.35))  # Figure(figsize=(7,6),dpi=100
 
 # Testing a combined figure with two subplots 9/3/2020
 # f3 = Figure(figsize=(7,3),dpi=200, facecolor=(0.35,0.35,0.35))
@@ -1378,7 +1376,7 @@ class AnalyzerFieldsScreen(tk.Frame):
         label3 = tk.Label(self, text="Test Point ID:", font=SMALL_FONT)
         label3.place(x=15+paddx,y=50+paddy*i)
         label3.config(bg="grey25",fg="white")
-
+        
         global title
         self.title = StringVar(self, value=header_list[0])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.title)
@@ -1406,7 +1404,7 @@ class AnalyzerFieldsScreen(tk.Frame):
         label4 = tk.Label(self, text="Location:", font=SMALL_FONT)
         label4.place(x=15+paddx,y=50+paddy*i)
         label4.config(bg="grey25",fg="white")
-
+        
         global location
         self.location = StringVar(self, value=header_list[2])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.location)
@@ -1434,67 +1432,67 @@ class AnalyzerFieldsScreen(tk.Frame):
         label4 = tk.Label(self, text="Tool ID:", font=SMALL_FONT)
         label4.place(x=15+paddx,y=50+paddy*i)
         label4.config(bg="grey25",fg="white")
-
+        
         global tool_id
         self.tool_id = StringVar(self, value=header_list[4])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.tool_id)
         self.textbox.place(x=15+paddx,y=85+paddy*i)
         tool_id = self.tool_id
         i=i+1
-
+        
         # test gas entry
         label5 = tk.Label(self, text="Test Gas:", font=SMALL_FONT)
         label5.place(x=15+paddx,y=50+paddy*i)
         label5.config(bg="grey25",fg="white")
-
+        
         global test_gas
         self.test_gas = StringVar(self, value=header_list[5])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.test_gas)
         self.textbox.place(x=15+paddx,y=85+paddy*i)
         test_gas = self.test_gas
         i=i+1
-
+        
         # source gas entry
         label6 = tk.Label(self, text="Source Gas (PPB):", font=SMALL_FONT)
         label6.place(x=15+paddx,y=50+paddy*i)
         label6.config(bg="grey25",fg="white")
-
+        
         global source_gas
         self.source_gas = StringVar(self, value=header_list[6])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.source_gas)
         self.textbox.place(x=15+paddx,y=85+paddy*i)
         source_gas = self.source_gas
         i=i+1
-
+        
         # technician entry
         label7 = tk.Label(self, text="Technician:", font=SMALL_FONT)
         label7.place(x=15+paddx,y=50+paddy*i)
         label7.config(bg="grey25",fg="white")
-
+        
         global technician
         self.technician = StringVar(self, value=header_list[7])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.technician)
         self.textbox.place(x=15+paddx,y=85+paddy*i)
         technician = self.technician
         i=i+1
-
+        
         # system flow entry
         label8 = tk.Label(self, text="System Flow:", font=SMALL_FONT)
         label8.place(x=15+paddx,y=50+paddy*i)
         label8.config(bg="grey25",fg="white")
-
+        
         global system_flow
         self.system_flow = StringVar(self, value=header_list[8])
         self.textbox = ttk.Entry(self,width=20, textvariable = self.system_flow)
         self.textbox.place(x=15+paddx,y=85+paddy*i)
         system_flow = self.system_flow
         i=i+1
-
+        
         #comments entry
         label9 = tk.Label(self, text="Comments:", font=SMALL_FONT)
         label9.place(x=15+paddx,y=50+paddy*i)
         label9.config(bg="grey25",fg="white")
-
+        
         global comments
         self.comments = StringVar(self, value=header_list[9])
         self.textbox = ttk.Entry(self,width=40, textvariable = self.comments)
@@ -2332,7 +2330,7 @@ def confirm_fields(start_stop):
         '''                             ### possible "are you sure" window for delete test button ####
             result = messagebox.askquestion("Delete", "Are You Sure?", icon='warning')
             if result == 'yes':
-
+                
                 shutil.rmtree(pathF)
                 top4.destroy()
             else:
@@ -3868,6 +3866,7 @@ def animateh2o(i):
             a3.ticklabel_format(useOffset=False)
             plot_axes_h2o(h2oxList, h2oyList, a3)
 
+
         h2ofileTitle = "H2O"
 
         if recording == True and var2.get() != 'radO2':
@@ -4061,7 +4060,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             #### deltaDrift is how much the interval is drifting from 1 minute ######
             deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
 
-            ############################
+############################
             global intervalO2
             if round((o2time.total_seconds()) / 60, 0) != 0.0:
 
@@ -4076,7 +4075,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 intervalO2 = 4000
 
             ani1.event_source.interval = int(intervalO2)
-            ############################
+############################
 
             # print(" deltaf drift = " + str(deltaDrift))
             # print(" deltaf interval = " + str(ani1.event_source.interval))
