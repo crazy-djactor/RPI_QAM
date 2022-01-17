@@ -1913,6 +1913,7 @@ def stop_confirm():
 
     confirm_window = PopupWindow(params)
 
+
 #### DELETE CONFIRMATION WINDOW
 def delete_confirm():
     params = {
@@ -3863,6 +3864,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         global deltafConnected
         global cycleO2
         demo_mode = False
+        o2 = 0
         if deltafConnected == True and var2.get() != 'radH2O':
             attempts = 0
             while attempts < 15:
@@ -3968,27 +3970,22 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 testingStatusMessageDeltaf.set("")
             else:
                 testingStatusMessageDeltaf.set("Demo Mode")
-        if deltafConnected == False:
+        else:
             # print('o2 is fucked')
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
         global o2data_max
         global o2data_min
 
-        try:
-            o2data_max
-        except:
-            o2data_max = o2
-        else:
-            if o2data_max < o2:
-                o2data_max = o2
+        if abs(o2data_max - o2) > 1000:
+            return
+        if abs(o2data_min - o2) > 1000:
+            return
 
-        try:
-            o2data_min
-        except:
+        if o2data_max < o2:
+            o2data_max = o2
+
+        if o2data_min > o2:
             o2data_min = o2
-        else:
-            if o2data_min > o2:
-                o2data_min = o2
 
         cycleO2 += 1
         if cycleO2 == 15:
@@ -4151,7 +4148,6 @@ def stop_recording():
     global time_elapsed
     time_elapsed = stop_time - start_time
     time_elapsed = time_elapsed_string(time_elapsed)
-
 
     with open(f'{root_path}/Header_default.csv', newline='') as t:
         headreader = csv.reader(t)
