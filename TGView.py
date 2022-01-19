@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 # from matplotlib.backend_tools import ToolBase, ToolToggleBase
 from fpdf import FPDF
 from statistics import mean
+from modules.manage_graph import ManageGraph
 
 import math
 import textwrap
@@ -577,10 +578,7 @@ cycleH2O = 14
 cycleO2 = 14
 
 ## set initial plot min/max to 0/10 (this is adjust based on data being plotted)
-o2data_max = 10
-o2data_min = 0
-h2odata_max = 10
-h2odata_min = 0
+manageGraphData = ManageGraph()
 
 
 ####First Toplevel frame to appear is Splash. RPiReader initializes after splash####
@@ -1808,12 +1806,7 @@ class PageOne(tk.Frame):
         global a1, a2
         a1.cla()
         a2.cla()
-        global h2odata_max, h2odata_min
-        del h2odata_max
-        del h2odata_min
-        global o2data_max, o2data_min
-        del o2data_max
-        del o2data_min
+
         ## recording variable dictates whether analytical data is currently being written to .csv
         global recording
         recording = False
@@ -2026,12 +2019,7 @@ def confirm_fields(start_stop):
         global h2o_dataList
         global a1, a2
         global cycleO2, cycleH2O
-        global h2odata_max, h2odata_min
-        del h2odata_max
-        del h2odata_min
-        global o2data_max, o2data_min
-        del o2data_max
-        del o2data_min
+
         cycleH2O = 14
         cycleO2 = 14
         o2_dataList = ''
@@ -2098,18 +2086,6 @@ def confirm_fields(start_stop):
         global a1, a2
         a1.clear()
         a2.clear()
-
-        # Min / Max data clear#
-        try:
-            global h2odata_max, h2odata_min
-            del h2odata_max
-            del h2odata_min
-            global o2data_max, o2data_min
-            del o2data_max
-            del o2data_min
-        except NameError as e:
-            print(e)
-            pass
 
         # plot the next data grab#
         global cycleO2, cycleH2O
@@ -3468,10 +3444,10 @@ def confirm_fields(start_stop):
 def plot_axes_o2(x_list, y_list, axe):
     marker_style = '.'
     o2x_max = max(x_list)
-    if o2data_min < 0:
-        axe.set_ylim(o2data_min - 10, o2data_max + 10)
+    if manageGraphData.o2data_min < 0:
+        axe.set_ylim(manageGraphData.o2data_min - 10, manageGraphData.o2data_max + 10)
     else:
-        axe.set_ylim(0 - 1, o2data_max + 10)
+        axe.set_ylim(0 - 1, manageGraphData.o2data_max + 10)
     axe.set_xlim([0, max(1, o2x_max)])
     axe.plot(x_list, y_list, color='#60D500', marker=marker_style, linewidth=1)
 
@@ -3489,17 +3465,12 @@ def plot_axes_h2o(x_list, y_list, axe):
     marker_style = '.'
     h2ox_max_val = max(x_list)
     axe.set_xlim([0, max(1, h2ox_max_val)])
-    if h2odata_min < 0:
-        axe.set_ylim(h2odata_min - 10, h2ox_max_val + 10)
+    if manageGraphData.h2odata_min < 0:
+        axe.set_ylim(manageGraphData.h2odata_min - 10, h2ox_max_val + 10)
     else:
-        axe.set_ylim(0 - 1, h2odata_max + 10)
+        axe.set_ylim(0 - 1, manageGraphData.h2odata_max + 10)
     axe.plot(x_list, y_list, color='#2FA4FF', marker=marker_style, picker=5, linewidth=1)
 
-    # COMMENTED OUT 10/8/2020
-    # if isinstance(title, str) and isinstance(tool_id, str):
-    # a2.set_title(title+" "+tool_id, fontsize=28, pad=20)
-    # else:
-    # a2.set_title(title.get()+" "+tool_id.get(), fontsize=28, pad=20)
     axe.set_xlabel('Time (minutes)', color="w")
     axe.set_ylabel('Moisture (PPB)', color="w")
     axe.tick_params(colors='w')
@@ -3658,24 +3629,8 @@ def animateh2o(i):
             # print('h2o is fucked')
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
 
-        global h2odata_max
-        global h2odata_min
-
-        try:
-            h2odata_max
-        except:
-            h2odata_max = h2o
-        else:
-            if h2odata_max < h2o:
-                h2odata_max = h2o
-
-        try:
-            h2odata_min
-        except:
-            h2odata_min = h2o
-        else:
-            if h2odata_min > h2o:
-                h2odata_min = h2o
+        if not manageGraphData.update_h2o_values(h2o):
+            return
 
         party_time = False
         #### IP grabber ####
@@ -3776,10 +3731,10 @@ def animateh2o(i):
         if var2.get() == 'radBoth':
             h2oxMax = max(h2oxList)
             a2.set_xlim([0, max(1, h2oxMax)])
-            if h2odata_min < 0:
-                a2.set_ylim(h2odata_min - 10, h2odata_max + 10)
+            if manageGraphData.h2odata_min < 0:
+                a2.set_ylim(manageGraphData.h2odata_min - 10, manageGraphData.h2odata_max + 10)
             else:
-                a2.set_ylim(0 - 1, h2odata_max + 10)
+                a2.set_ylim(0 - 1, manageGraphData.h2odata_max + 10)
             a2.plot(h2oxList, h2oyList, color='#2FA4FF', marker='.', picker=5, linewidth=1)
 
             # COMMENTED OUT 10/8/2020
@@ -3967,19 +3922,9 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         else:
             # print('o2 is fucked')
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
-        global o2data_max
-        global o2data_min
 
-        if abs(o2data_max - o2) > 1000:
+        if not manageGraphData.update_o2_values(o2):
             return
-        if abs(o2data_min - o2) > 1000:
-            return
-
-        if o2data_max < o2:
-            o2data_max = o2
-
-        if o2data_min > o2:
-            o2data_min = o2
 
         cycleO2 += 1
         if cycleO2 == 15:
@@ -4060,12 +4005,11 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 # a1.tick_params(colors='w')
 
             if var2.get() == 'radBoth':
-                dataRangeo2 = o2data_max - o2data_min
                 o2xMax = max(o2xList)
-                if o2data_min < 0:
-                    a1.set_ylim(o2data_min - 10, o2data_max + 10)
+                if manageGraphData.o2data_min < 0:
+                    a1.set_ylim(manageGraphData.o2data_min - 10, manageGraphData.o2data_max + 10)
                 else:
-                    a1.set_ylim(0 - 1, o2data_max + 10)
+                    a1.set_ylim(0 - 1, manageGraphData.o2data_max + 10)
                 a1.set_xlim([0, max(1, o2xMax)])
                 a1.plot(o2xList, o2yList, color='#60D500', marker=markerStyle, linewidth=1)
 
