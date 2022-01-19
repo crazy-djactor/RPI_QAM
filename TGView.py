@@ -1,17 +1,14 @@
 #!/usr/bin/python3
 
-from contextlib import suppress
 import matplotlib
 
-from AdjustFigure import AdjustFigure
+from modules.AdjustFigure import AdjustFigure
 from GlobalConst import dir_TGView, root_path
-from Util import raw_to_ppb, strfdelta, time_elapsed_string
+from Util import raw_to_ppb, time_elapsed_string
 from component.PopupWindow import PopupWindow
 
 matplotlib.use("TkAgg")
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.widgets import SpanSelector
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
@@ -24,15 +21,10 @@ import matplotlib.pyplot as plt
 from fpdf import FPDF
 from statistics import mean
 
-import sys
 import math
-import asyncio
-import socket
 import textwrap
 import shutil
-from shutil import copytree, ignore_patterns
 import random
-import re
 import serial
 import time
 import binascii
@@ -42,19 +34,15 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Progressbar
 from tkinter import filedialog
-from tkfilebrowser import askopendirname, askopenfilenames, asksaveasfilename
-import pandas as pd
+from tkfilebrowser import askopendirname
 import numpy as np
 from datetime import datetime, timedelta
-import PIL
 from PIL import ImageTk
 from PIL import Image
 from PIL import ImageFile
 import os, sys
-import subprocess
 
 from tkinter import Toplevel
-from tkinter import messagebox
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  ##required for loading certain images
 QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
@@ -915,25 +903,25 @@ class StartPage(tk.Frame):
         pay = 140
         graphXfield = 130
         graphXpad = 860
-        global img
+        global img_o2
         try:
             gambar = Image.open(f'{root_path}/TGView/graphO2.png')
         except:
             gambar = Image.open(f'{root_path}/graph1.png')
         imgSplash = ImageTk.PhotoImage(gambar)
-        img = Label(self, image=imgSplash, bg="grey25")
-        img.image = imgSplash
-        img.place(x=20, y=200)
+        img_o2 = Label(self, image=imgSplash, bg="grey25")
+        img_o2.image = imgSplash
+        img_o2.place(x=20, y=200)
         #
-        global img3
+        global img_h2o
         try:
             gambar2 = Image.open(f'{root_path}/TGView/graphH2O.png')
         except:
             gambar2 = Image.open(f'{root_path}/graph1.png')
         imgSplash2 = ImageTk.PhotoImage(gambar2)
-        img3 = Label(self, image=imgSplash2, bg="grey25")
-        img3.image = imgSplash2
-        img3.place(x=970, y=200)
+        img_h2o = Label(self, image=imgSplash2, bg="grey25")
+        img_h2o.image = imgSplash2
+        img_h2o.place(x=970, y=200)
 
         ### button placement parameters
         pax += 150
@@ -1002,8 +990,9 @@ class StartPage(tk.Frame):
 
         # Show Current O2 Reading
         global labelO2
+        o2_position = AdjustFigure.o2_axis()
         labelO2 = tk.Label(self, text="Current O2:", font=SMALL_FONT)
-        labelO2.place(x=400, y=820)
+        labelO2.place(x=o2_position['label_x'], y=o2_position['label_y'])
         labelO2.config(bg="grey35", fg="white")
         #
         global currento2
@@ -1012,12 +1001,13 @@ class StartPage(tk.Frame):
         global labelO2_value
         labelO2_value = tk.Label(self, textvariable=currento2, width=6, bg="grey35", fg="#60D500",
                                  font=('calibri', 20, 'bold'))
-        labelO2_value.place(x=600, y=815)
+        labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
 
         # Show Current H2O Reading
         global labelH2O, labelH2O_value
+        h2o_position = AdjustFigure.ho2_axis()
         labelH2O = tk.Label(self, text="Current H2O:", font=SMALL_FONT)
-        labelH2O.place(x=1350, y=820)
+        labelH2O.place(x=h2o_position['label_x'], y=h2o_position['label_y'])
         labelH2O.config(bg="grey35", fg="white")
 
         global currenth2o
@@ -1026,7 +1016,7 @@ class StartPage(tk.Frame):
             currenth2o = 0
         labelH2O_value = tk.Label(self, textvariable=currenth2o, width=6, bg="grey35", fg="#00BFFF",
                                   font=('calibri', 20, 'bold'))
-        labelH2O_value.place(x=1550, y=815)
+        labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
 
 
 ##### Global Methods #####
@@ -3527,31 +3517,35 @@ def plot_axes_h2o(x_list, y_list, axe):
 
 
 def replace_images():
-    place_info_img = img.place_info()
-    place_info_img3 = img.place_info()
+    place_info_img = img_o2.place_info()
+    place_info_img3 = img_h2o.place_info()
+    o2_position = AdjustFigure.o2_axis()
+    h2o_position = AdjustFigure.ho2_axis()
+    ext_position = AdjustFigure.image_ext_axis()
     if var2.get() == 'radBoth':
-        if place_info_img.get('x') != 20:
-            img.place(x=20, y=200)
-            labelO2.place(x=400, y=820)
-            labelO2_value.place(x=600, y=815)
-        if place_info_img3.get('x') != 970:
-            img3.place(x=970, y=200)
-            labelH2O.place(x=1350, y=820)
-            labelH2O_value.place(x=1550, y=815)
+        if place_info_img.get('x') != o2_position['img_x']:  # need to replace
+            img_o2.place(x=o2_position['img_x'], y=o2_position['img_y'])
+            labelO2.place(x=o2_position['label_x'], y=o2_position['label_y'])
+            labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
+
+        if place_info_img3.get('x') != h2o_position['img_x']:
+            img_h2o.place(x=h2o_position['img_x'], y=h2o_position['img_y'])
+            labelH2O.place(x=h2o_position['label_x'], y=h2o_position['label_y'])
+            labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
     elif var2.get() == 'radH2O':
-        if place_info_img3.get('x') != 970:
-            img3.place(x=20, y=200)
-            labelH2O.place(x=880, y=820)
-            labelH2O_value.place(x=1080, y=815)
-            img.place_forget()
+        if place_info_img3.get('x') != ext_position['img_x']:
+            img_h2o.place(x=ext_position['img_x'], y=ext_position['img_y'])
+            labelH2O.place(x=ext_position['label_x'], y=ext_position['label_y'])
+            labelH2O_value.place(x=ext_position['value_x'], y=ext_position['value_y'])
+            img_o2.place_forget()
             labelO2.place_forget()
             labelO2_value.place_forget()
     elif var2.get() == 'radO2':
-        if place_info_img.get('x') != 20:
-            img.place(x=20, y=200)
-            img3.place_forget()
-            labelO2.place(x=880, y=820)
-            labelO2_value.place(x=1080, y=815)
+        if place_info_img.get('x') != ext_position['img_x']:
+            img_o2.place(x=ext_position['img_x'], y=ext_position['img_y'])
+            img_h2o.place_forget()
+            labelO2.place(x=ext_position['label_x'], y=ext_position['label_y'])
+            labelO2_value.place(x=ext_position['value_x'], y=ext_position['value_y'])
             labelH2O.place_forget()
             labelH2O_value.place_forget()
 
@@ -3832,7 +3826,7 @@ def animateh2o(i):
                 f2.set_size_inches(figure_conf['w'], figure_conf['h'])
 
             f2.savefig('graphH2O.png', facecolor=f2.get_facecolor(), edgecolor="none")
-            global img3
+            global img_h2o
 
             # imgh = Image.open('graphH2O.png')
             # wpercent = (basewidth / float(imgh.size[0]))
@@ -3841,8 +3835,8 @@ def animateh2o(i):
             #
             # imgh.save('graphH2O.png')
             img4 = ImageTk.PhotoImage(Image.open('graphH2O.png'))
-            img3.configure(image=img4)
-            img3.image = img4
+            img_h2o.configure(image=img4)
+            img_h2o.image = img4
             replace_images()
 
         except FileNotFoundError:
@@ -4123,8 +4117,8 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             # imgg = imgg.resize((basewidth, hsize), Image.ANTIALIAS)
             # imgg.save('graphO2.png')
             img2 = ImageTk.PhotoImage(Image.open('graphO2.png'))
-            img.configure(image=img2)
-            img.image = img2
+            img_o2.configure(image=img2)
+            img_o2.image = img2
             replace_images()
         except FileNotFoundError:
             pass

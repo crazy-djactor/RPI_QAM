@@ -20,8 +20,8 @@ root.geometry("600x425")
 global var
 var = tkinter.StringVar()
 
-global img
-img = PhotoImage(file="QAM.png")
+global img_o2
+img_o2 = PhotoImage(file="QAM.png")
 
 def buttonClick():
     print("Success!!")

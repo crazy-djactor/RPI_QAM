@@ -296,9 +296,9 @@ root.geometry("600x425")
 
 QAMmd = Image.open('QAMmd.gif')
 imgSplash = ImageTk.PhotoImage(QAMmd)
-img = tk.Label(root, image=imgSplash, borderwidth=0, highlightthickness=0)
-img.image = imgSplash
-img.place(x=350, y=50)
+img_o2 = tk.Label(root, image=imgSplash, borderwidth=0, highlightthickness=0)
+img_o2.image = imgSplash
+img_o2.place(x=350, y=50)
 
 tk.Button(root, text="Select Folder", font=("century gothic",30,"bold"), fg="white", bg="#ff9500", command=openCSV).place(height=100,width=500,x=50,y=275)
 tk.Button(root, text="Dashboard", font=("Century Gothic",17, "bold"), fg="white", bg="#678176", command=root.destroy).place(height=75, width=175,x=50,y=50)

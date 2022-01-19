@@ -1,14 +1,11 @@
 #!/usr/bin/python3
 
-from contextlib import suppress
 import matplotlib
 
-from AdjustFigure import AdjustFigure
+from modules.AdjustFigure import AdjustFigure
 
 matplotlib.use("TkAgg")
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.widgets import SpanSelector
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
@@ -21,15 +18,10 @@ import matplotlib.pyplot as plt
 from fpdf import FPDF
 from statistics import mean
 
-import sys
 import math
-import asyncio
-import socket
 import textwrap
 import shutil
-from shutil import copytree, ignore_patterns
 import random
-import re
 import serial
 import time
 import binascii
@@ -39,19 +31,15 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Progressbar
 from tkinter import filedialog
-from tkfilebrowser import askopendirname, askopenfilenames, asksaveasfilename
-import pandas as pd
+from tkfilebrowser import askopendirname
 import numpy as np
 from datetime import datetime, timedelta
-import PIL
 from PIL import ImageTk
 from PIL import Image
 from PIL import ImageFile
 import os, sys
-import subprocess
 
 from tkinter import Toplevel
-from tkinter import messagebox
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  ##required for loading certain images
 QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
