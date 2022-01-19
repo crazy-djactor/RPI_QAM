@@ -23,6 +23,7 @@ def time_elapsed_string(time_duration):
             time_elapsed = strfdelta(time_duration, "{minutes} minutes")
     return time_elapsed
 
+
 def raw_to_ppb(data):
     raw_hex = str(binascii.hexlify(data[2:]))
     c = [raw_hex[i:i + 2] for i in range(0, len(raw_hex), 2)]
