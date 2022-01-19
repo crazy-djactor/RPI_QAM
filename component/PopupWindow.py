@@ -30,7 +30,7 @@ class PopupWindow:
         paddy = 5
         # Ask the question
         label4 = tk.Label(window, text=params['text_yes'], bg="grey25", fg='white',
-                          font=(confirm_font, 40, 'bold'), wraplength=550)
+                          font=(confirm_font, 20, 'bold'), wraplength=550)
         label4.place(relx=.5, rely=.29, anchor="center")
 
         # YES button

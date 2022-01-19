@@ -47,3 +47,16 @@ class AdjustFigure:
             'value_x': 1080,
             'value_y': 805
         }
+
+    @classmethod
+    def test_labels_axis(cls):
+        return {
+            'label_time_x': 100,
+            'label_time_y': 720,
+            'label_time_value_x': 105,
+            'label_time_value_y': 750,
+            'label_date_x': 250,
+            'label_date_y': 720,
+            'label_date_value_x': 255,
+            'label_date_value_y': 750,
+        }

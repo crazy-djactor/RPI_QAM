@@ -4,7 +4,7 @@ import matplotlib
 
 from modules.AdjustFigure import AdjustFigure
 from GlobalConst import dir_TGView, root_path
-from Util import raw_to_ppb, time_elapsed_string
+from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
 from component.PopupWindow import PopupWindow
 
 matplotlib.use("TkAgg")
@@ -579,6 +579,8 @@ cycleO2 = 14
 
 ## set initial plot min/max to 0/10 (this is adjust based on data being plotted)
 manageGraphData = ManageGraph()
+img_h2o = None
+img_o2 = None
 
 
 ####First Toplevel frame to appear is Splash. RPiReader initializes after splash####
@@ -738,6 +740,7 @@ class RPiReader(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+        frame.event_generate('<<ShowFrame>>')
 
 
 # StartPage appears first. contains
@@ -859,15 +862,6 @@ class StartPage(tk.Frame):
         ### default when the program starts is "both"
         var2.set('radBoth')
 
-        def h2o_selected():
-            print(var2.get())
-
-        def o2_selected():
-            print(var2.get())
-
-        def both_selected():
-            print(var2.get())
-
         ### radio button placement
         s1 = ttk.Style()
         s1.configure("both.TRadiobutton", font=('Century Gothic', 21, 'bold'), background="#404040",
@@ -883,17 +877,17 @@ class StartPage(tk.Frame):
         rad_both = tk.Radiobutton(self, text="O2 & H2O", width=11, font=radioFont, variable=var2, selectcolor=QAM_GREEN,
                                   activebackground=QAM_GREEN, background="grey35", \
                                   highlightbackground=QAM_GREEN, activeforeground="white", foreground="white",
-                                  indicatoron=0, value="radBoth", relief=FLAT, command=both_selected).place(
+                                  indicatoron=0, value="radBoth", relief=FLAT, command=self.both_selected).place(
             x=padx + pax, y=130)  # (x=padx*2+pax,y=200+pay)
         rad_o2 = tk.Radiobutton(self, text="O2", width=11, font=radioFont, variable=var2, selectcolor="#00CD66",
                                 activebackground="#00CD66", background="grey35", \
                                 highlightbackground="#00CD66", activeforeground="white", foreground="white",
-                                indicatoron=0, value="radO2", relief=FLAT, command=o2_selected).place(x=pax,
+                                indicatoron=0, value="radO2", relief=FLAT, command=self.o2_selected).place(x=pax,
                                                                                                       y=130)  # (x=pax,y=200+pay)
         rad_h2o = tk.Radiobutton(self, text="H2O", width=11, font=radioFont, variable=var2, selectcolor="#00BFFF",
                                  activebackground="#00BFFF", background="grey35", \
                                  highlightbackground="#00BFFF", activeforeground="white", foreground="white",
-                                 indicatoron=0, value="radH2O", relief=FLAT, command=h2o_selected).place(
+                                 indicatoron=0, value="radH2O", relief=FLAT, command=self.h2o_selected).place(
             x=padx * 2 + pax, y=130)  # (x=padx+pax,y=200+pay)
 
         #### StartPage Graph placement (these are just .png copies of plots created in PageOne)
@@ -909,7 +903,8 @@ class StartPage(tk.Frame):
         imgSplash = ImageTk.PhotoImage(gambar)
         img_o2 = Label(self, image=imgSplash, bg="grey25")
         img_o2.image = imgSplash
-        img_o2.place(x=20, y=200)
+        o2_position = AdjustFigure.o2_axis()
+        img_o2.place(x=o2_position['img_x'], y=o2_position['img_y'])
         #
         global img_h2o
         try:
@@ -919,7 +914,8 @@ class StartPage(tk.Frame):
         imgSplash2 = ImageTk.PhotoImage(gambar2)
         img_h2o = Label(self, image=imgSplash2, bg="grey25")
         img_h2o.image = imgSplash2
-        img_h2o.place(x=970, y=200)
+        h2o_position = AdjustFigure.ho2_axis()
+        img_h2o.place(x=h2o_position['img_x'], y=h2o_position['img_y'])
 
         ### button placement parameters
         pax += 150
@@ -987,35 +983,50 @@ class StartPage(tk.Frame):
         xfield = 800
 
         # Show Current O2 Reading
-        global labelO2
+        # global labelO2
         o2_position = AdjustFigure.o2_axis()
-        labelO2 = tk.Label(self, text="Current O2:", font=SMALL_FONT)
-        labelO2.place(x=o2_position['label_x'], y=o2_position['label_y'])
-        labelO2.config(bg="grey35", fg="white")
+        self.labelO2 = tk.Label(self, text="Current O2:", font=SMALL_FONT)
+        self.labelO2.place(x=o2_position['label_x'], y=o2_position['label_y'])
+        self.labelO2.config(bg="grey35", fg="white")
         #
         global currento2
         currento2 = StringVar(value=0)
         # fg="#00CD66"
-        global labelO2_value
-        labelO2_value = tk.Label(self, textvariable=currento2, width=6, bg="grey35", fg="#60D500",
+        # global labelO2_value
+        self.labelO2_value = tk.Label(self, textvariable=currento2, width=6, bg="grey35", fg="#60D500",
                                  font=('calibri', 20, 'bold'))
-        labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
+        self.labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
 
         # Show Current H2O Reading
-        global labelH2O, labelH2O_value
+        # global labelH2O, labelH2O_value
         h2o_position = AdjustFigure.ho2_axis()
-        labelH2O = tk.Label(self, text="Current H2O:", font=SMALL_FONT)
-        labelH2O.place(x=h2o_position['label_x'], y=h2o_position['label_y'])
-        labelH2O.config(bg="grey35", fg="white")
+        self.labelH2O = tk.Label(self, text="Current H2O:", font=SMALL_FONT)
+        self.labelH2O.place(x=h2o_position['label_x'], y=h2o_position['label_y'])
+        self.labelH2O.config(bg="grey35", fg="white")
 
         global currenth2o
         currenth2o = StringVar(value=0)
         if int(currenth2o.get()) < 0:
             currenth2o = 0
-        labelH2O_value = tk.Label(self, textvariable=currenth2o, width=6, bg="grey35", fg="#00BFFF",
+        self.labelH2O_value = tk.Label(self, textvariable=currenth2o, width=6, bg="grey35", fg="#00BFFF",
                                   font=('calibri', 20, 'bold'))
-        labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
+        self.labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
+        self.bind('<<ShowFrame>>', self.on_show_frame)
 
+    def h2o_selected(self):
+        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        print(var2.get())
+
+    def o2_selected(self):
+        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        print(var2.get())
+
+    def both_selected(self):
+        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        print(var2.get())
+
+    def on_show_frame(self, event):
+        print('Start Page onShowFrame')
 
 ##### Global Methods #####
 def fuckitup(how):
@@ -1652,27 +1663,17 @@ class PageOne(tk.Frame):
         # f1 = plt.figure(figsize=(10.1,6), dpi=100, facecolor=(0.40,0.51,0.46))
         # a1 = f1.add_subplot(211,facecolor=(0.25,0.25,0.25)
 
-        global canvas1
+
         # Oxygen DeltaF Graph
-        canvas1 = FigureCanvasTkAgg(f1, self)
-        canvas1.draw()
-        canvas1.get_tk_widget().place(x=graphXfield, y=graphYfield)  # .place(x=graphXfield,y=graphYfield)
+        self.canvas1 = FigureCanvasTkAgg(f1, self)
+        self.canvas1.draw()
+        self.canvas1.get_tk_widget().place(x=graphXfield, y=graphYfield)  # .place(x=graphXfield,y=graphYfield)
+            # Moisture Tracer Graph
+        self.canvas2 = FigureCanvasTkAgg(f2, self)
+        self.canvas2.draw()
+        self.canvas2.get_tk_widget().place(x=graphPad, y=graphYfield)  # .place(x=graphXfield+graphPad,y=graphYfield)
 
-        # Moisture Tracer Graph
-        canvas2 = FigureCanvasTkAgg(f2, self)
-        canvas2.draw()
-        canvas2.get_tk_widget().place(x=graphPad, y=graphYfield)  # .place(x=graphXfield+graphPad,y=graphYfield)
-
-        def onpick3(event):
-            global xdata, ydata, point, ind, line
-            line = event.artist
-
-            xdata, ydata = line.get_data()
-            ind = event.ind
-            point = np.array([xdata[ind], ydata[ind]]).T
-            # print('on pick line:', point)
-
-        f2.canvas.mpl_connect('pick_event', onpick3)
+        f2.canvas.mpl_connect('pick_event', self.onpick3)
 
         #### REMOVED ON 2/24/21
         # toolbarFrame = Frame(master=self)
@@ -1750,40 +1751,52 @@ class PageOne(tk.Frame):
         m = 0
         multiplier = 2.3
         # Start Time Display
-        label13 = tk.Label(self, text="Start Time:", font=SMALL_FONT)
-        label13.place(x=padx + testingPadX * m, y=pady)
-        label13.config(bg="grey35", fg="white")
+        labels_axis = AdjustFigure.test_labels_axis()
+        self.label_time = tk.Label(self, text="Start Time:", font=SMALLER_FONT)
+        self.label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
+        self.label_time.config(bg="grey35", fg="white")
 
-        label14 = tk.Label(self, textvariable=start_timet, bg="grey35", fg="#FFA500", font=('lato', 20, 'bold'))
-        label14.place(x=5 + padx + testingPadX * m, y=padyy)
+        self.label_time_value = tk.Label(self, textvariable=start_timet, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
+        self.label_time_value.place(x=labels_axis['label_time_value_x'], y=labels_axis['label_time_value_y'])
 
         # Start Date Display
-        label13 = tk.Label(self, text="Start Date:", font=SMALL_FONT)
-        label13.place(x=215 + padx + testingPadX * m, y=pady)
-        label13.config(bg="grey35", fg="white")
+        self.label_date = tk.Label(self, text="Start Date:", font=SMALLER_FONT)
+        self.label_date.place(x=labels_axis['label_date_x'], y=labels_axis['label_date_y'])
+        self.label_date.config(bg="grey35", fg="white")
 
-        label14 = tk.Label(self, textvariable=start_dateRec, bg="grey35", fg="#FFA500", font=('lato', 20, 'bold'))
-        label14.place(x=220 + padx + testingPadX * m, y=padyy)
+        self.label_date_value = tk.Label(self, textvariable=start_dateRec, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
+        self.label_date_value.place(x=labels_axis['label_date_value_x'], y=labels_axis['label_date_value_y'])
 
         m += multiplier
         pady = 755
         padx = -75
         # # current o2
-        # label13 = tk.Label(self, text="Current O2:", font=SMALL_FONT)
-        # label13.place(x=padx + testingPadX * m + 10, y=pady)
-        # label13.config(bg="grey35", fg="white")
-        #
-        # label14 = tk.Label(self, textvariable=currento2, bg="grey35", fg="#60D500", font=('lato', 20, 'bold'))
-        # label14.place(x=165 + padx + testingPadX * m + 10, y=pady)
-        # m += multiplier
-        # m += 2.2
-        # # current h2o
-        # label13 = tk.Label(self, text="Current H2O:", font=SMALL_FONT)
-        # label13.place(x=padx + testingPadX * m + 70, y=pady)
-        # label13.config(bg="grey35", fg="white")
-        #
-        # label14 = tk.Label(self, textvariable=currenth2o, bg="grey35", fg="#2FA4FF", font=('lato', 20, 'bold'))
-        # label14.place(x=200 + padx + testingPadX * m + 70, y=pady)
+        self.labelO2 = tk.Label(self, text="Current O2:", font=SMALL_FONT)
+        self.labelO2.place(x=padx + testingPadX * m + 10, y=pady)
+        self.labelO2.config(bg="grey35", fg="white")
+
+        self.labelO2_value = tk.Label(self, textvariable=currento2, bg="grey35", fg="#60D500", font=('lato', 20, 'bold'))
+        self.labelO2_value.place(x=165 + padx + testingPadX * m + 10, y=pady)
+        m += multiplier
+        m += 2.2
+        # current h2o
+        self.labelH2O = tk.Label(self, text="Current H2O:", font=SMALL_FONT)
+        self.labelH2O.place(x=padx + testingPadX * m + 70, y=pady)
+        self.labelH2O.config(bg="grey35", fg="white")
+
+        self.labelH2O_value = tk.Label(self, textvariable=currenth2o, bg="grey35", fg="#2FA4FF", font=('lato', 20, 'bold'))
+        self.labelH2O_value.place(x=200 + padx + testingPadX * m + 70, y=pady)
+
+        self.bind('<<ShowFrame>>', self.on_show_frame)
+
+    def onpick3(self, event):
+        global xdata, ydata, point, ind, line
+        line = event.artist
+
+        xdata, ydata = line.get_data()
+        ind = event.ind
+        point = np.array([xdata[ind], ydata[ind]]).T
+        # print('on pick line:', point)
 
     def idle_on_off(self, start_stopper):
         if start_stopper == 'start':
@@ -1884,6 +1897,10 @@ class PageOne(tk.Frame):
         # os.rename(pathF,pathG)
         # pathF = pathG
         confirm_fields(start_stop='stop')
+
+    def on_show_frame(self, event):
+        print('onshow frame canvas')
+        config_canvas_test(self.canvas1, self.canvas2, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
 
 
 #### STOP CONFIRMATION WINDOW
@@ -3487,40 +3504,6 @@ def plot_axes_h2o(x_list, y_list, axe):
         pass
 
 
-def replace_images():
-    place_info_img = img_o2.place_info()
-    place_info_img3 = img_h2o.place_info()
-    o2_position = AdjustFigure.o2_axis()
-    h2o_position = AdjustFigure.ho2_axis()
-    ext_position = AdjustFigure.image_ext_axis()
-    if var2.get() == 'radBoth':
-        if place_info_img.get('x') != o2_position['img_x']:  # need to replace
-            img_o2.place(x=o2_position['img_x'], y=o2_position['img_y'])
-            labelO2.place(x=o2_position['label_x'], y=o2_position['label_y'])
-            labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
-
-        if place_info_img3.get('x') != h2o_position['img_x']:
-            img_h2o.place(x=h2o_position['img_x'], y=h2o_position['img_y'])
-            labelH2O.place(x=h2o_position['label_x'], y=h2o_position['label_y'])
-            labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
-    elif var2.get() == 'radH2O':
-        if place_info_img3.get('x') != ext_position['img_x']:
-            img_h2o.place(x=ext_position['img_x'], y=ext_position['img_y'])
-            labelH2O.place(x=ext_position['label_x'], y=ext_position['label_y'])
-            labelH2O_value.place(x=ext_position['value_x'], y=ext_position['value_y'])
-            img_o2.place_forget()
-            labelO2.place_forget()
-            labelO2_value.place_forget()
-    elif var2.get() == 'radO2':
-        if place_info_img.get('x') != ext_position['img_x']:
-            img_o2.place(x=ext_position['img_x'], y=ext_position['img_y'])
-            img_h2o.place_forget()
-            labelO2.place(x=ext_position['label_x'], y=ext_position['label_y'])
-            labelO2_value.place(x=ext_position['value_x'], y=ext_position['value_y'])
-            labelH2O.place_forget()
-            labelH2O_value.place_forget()
-
-
 def animateh2o(i):
     global currentMode
     global currentUpper
@@ -3783,16 +3766,10 @@ def animateh2o(i):
             f2.savefig('graphH2O.png', facecolor=f2.get_facecolor(), edgecolor="none")
             global img_h2o
 
-            # imgh = Image.open('graphH2O.png')
-            # wpercent = (basewidth / float(imgh.size[0]))
-            # hsize = int((float(imgh.size[1]) * float(wpercent) * .92))  # 0.84
-            # imgh = imgh.resize((basewidth, hsize), Image.ANTIALIAS)
-            #
-            # imgh.save('graphH2O.png')
             img4 = ImageTk.PhotoImage(Image.open('graphH2O.png'))
             img_h2o.configure(image=img4)
             img_h2o.image = img4
-            replace_images()
+            # replace_objects(img_o2, img_h2o, var2.get(), labelO2, labelO2_value, labelH2O, labelH2O_value)
 
         except FileNotFoundError:
             pass
@@ -4063,7 +4040,8 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             img2 = ImageTk.PhotoImage(Image.open('graphO2.png'))
             img_o2.configure(image=img2)
             img_o2.image = img2
-            replace_images()
+            # replace_objects(img_o2, img_h2o, var2.get(), labelO2, labelO2_value, labelH2O, labelH2O_value)
+
         except FileNotFoundError:
             pass
 
