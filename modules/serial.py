@@ -1,4 +1,5 @@
 import binascii
+import random
 import time
 import serial
 
@@ -64,79 +65,85 @@ class SerialInterface:
         command = bytearray([146])
         operand = bytearray([1])
         sleepy = 0.02
+        try:
+            ser = serial.Serial(
+                port=cls.comPortMoist, \
+                baudrate=9600, \
+                parity=serial.PARITY_NONE, \
+                stopbits=serial.STOPBITS_ONE, \
+                bytesize=serial.EIGHTBITS, \
+                timeout=1)
 
-        ser = serial.Serial(
-            port=cls.comPortMoist, \
-            baudrate=9600, \
-            parity=serial.PARITY_NONE, \
-            stopbits=serial.STOPBITS_ONE, \
-            bytesize=serial.EIGHTBITS, \
-            timeout=1)
+            # time.sleep(sleepy)
+            data = bytearray()
+            ser.write(command)  # send command byte
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            echo = ser.read(1)  # recieve command byte
+            data = data + echo
 
-        # time.sleep(sleepy)
-        data = bytearray()
-        ser.write(command)  # send command byte
+            ser.write(operand)
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            echo = ser.read(2)
+            data = data + echo
+
+            ser.write(bytearray([echo[-1]]))
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            echo = ser.read(1)
+            data = data + echo
+
+            ser.write(bytearray([echo[-1]]))
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            echo = ser.read(1)
+            data = data + echo
+
+            ser.write(bytearray([echo[-1]]))
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            echo = ser.read(1)
+            data = data + echo
+
+            ser.write(bytearray([echo[-1]]))
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            echo = ser.read(1)
+            data = data + echo
+            ser.close()
+            SerialInterface.demoMode = False
+            SerialInterface.meecoConnected = True
+            return data
+        except Exception as e:
+            SerialInterface.meecoConnected = True if SerialInterface.demoMode else False
+            return 'err'
         # await asyncio.sleep(sleepy)
         # time.sleep(sleepy)
-        echo = ser.read(1)  # recieve command byte
-        data = data + echo
 
-        ser.write(operand)
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        echo = ser.read(2)
-        data = data + echo
-
-        ser.write(bytearray([echo[-1]]))
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        echo = ser.read(1)
-        data = data + echo
-
-        ser.write(bytearray([echo[-1]]))
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        echo = ser.read(1)
-        data = data + echo
-
-        ser.write(bytearray([echo[-1]]))
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        echo = ser.read(1)
-        data = data + echo
-
-        ser.write(bytearray([echo[-1]]))
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        echo = ser.read(1)
-        data = data + echo
-        return (data)
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        ser.close()
 
     @classmethod
     def get_O2(cls):
-        ser = serial.Serial(
-            port=cls.comPortOxygen, \
-            baudrate=9600, \
-            parity=serial.PARITY_NONE, \
-            stopbits=serial.STOPBITS_ONE, \
-            bytesize=serial.EIGHTBITS, \
-            timeout=1)
-
-        sleepy = 0.03
-        i = 0
-        fullcommand = bytearray([1, 2, 1, 0, 0, 3, 13])
-        ser.write(fullcommand)
-        ser.write(b' ')
-        # await asyncio.sleep(sleepy)
-        # time.sleep(sleepy)
-        deldata = ser.read(8)
-        data = str(binascii.hexlify(deldata[4:8]))
-        # print(str(binascii.hexlify(deldata)))
-        c = [data[i:i + 2] for i in range(0, len(data), 2)]
         try:
+            ser = serial.Serial(
+                port=cls.comPortOxygen, \
+                baudrate=9600, \
+                parity=serial.PARITY_NONE, \
+                stopbits=serial.STOPBITS_ONE, \
+                bytesize=serial.EIGHTBITS, \
+                timeout=1)
+
+            sleepy = 0.03
+            i = 0
+            fullcommand = bytearray([1, 2, 1, 0, 0, 3, 13])
+            ser.write(fullcommand)
+            ser.write(b' ')
+            # await asyncio.sleep(sleepy)
+            # time.sleep(sleepy)
+            deldata = ser.read(8)
+            data = str(binascii.hexlify(deldata[4:8]))
+            # print(str(binascii.hexlify(deldata)))
+            c = [data[i:i + 2] for i in range(0, len(data), 2)]
             byte1 = "{:08b}".format(int(c[1], base=16))
             byte2 = "{:08b}".format(int(c[2], base=16))
             byte3 = "{:08b}".format(int(c[3], base=16))
@@ -161,10 +168,50 @@ class SerialInterface:
 
             ser.close()
             # print(o2_ppb)
-            return (str(o2_ppb))
+            SerialInterface.demoMode = False
+            SerialInterface.deltafConnected = True
+            return str(o2_ppb)
         except Exception as e:
+            SerialInterface.deltafConnected = True if SerialInterface.demoMode else False
             print("get_O2 error:" + str(e))
-            pass
+            return 'err'
+
+    @classmethod
+    def get_valid_o2(cls, try_count):
+        # return 'N/A' or valid float value
+        attempts = 0
+        while attempts < try_count:
+            str_o2 = cls.get_O2()  #### comment out for random data###
+            if SerialInterface.demoMode:
+                return round(float(random.random() * 100), 1)
+            if str_o2 == 'err':
+                # not demo mode and error string
+                attempts += 1
+                continue
+            else:
+                return round(float(str_o2), 1)
+        ##############
+        print('attempt FAILED for O2')
+        return 'N/A'
+
+    @classmethod
+    def get_valid_h2o(cls, try_count):
+        # return 'N/A' or valid float value
+        attempts = 0
+        while attempts < try_count:
+            str_h2o = cls.get_h20()  #### comment out for random data###
+            if SerialInterface.demoMode:
+                return round(float(random.random() * 100), 1)
+            if str_h2o == 'err':
+                # not demo mode and error string
+                attempts += 1
+                continue
+            else:
+                return round(float(str_h2o), 1)
+        ##############
+        print('attempt FAILED for h2o')
+        return 'N/A'
+
 
 
 # ########EXPERIMENTAL: use this copy of get_O2 and replace in animation function to try to figure out how to read over 2PPM
@@ -232,3 +279,4 @@ class SerialInterface:
 #     except Exception as e:
 #         print("get_O2 error:" + str(e))
 #         pass
+

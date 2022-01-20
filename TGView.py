@@ -2,8 +2,9 @@
 
 import matplotlib
 
+from component.disconnect import disconnect
 from modules.AdjustFigure import AdjustFigure
-from GlobalConst import dir_TGView, root_path
+from GlobalConst import *
 from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
 from modules.serial import SerialInterface
 from component.PopupWindow import PopupWindow
@@ -351,14 +352,6 @@ font0.set_family('sans-serif')
 font0.set_weight('bold')
 font0.set_size('xx-large')
 
-# assign fonts for various GUI components
-LARGEST_FONT = ("Lato", 68, 'bold')
-LARGER_FONT = ("Lato", 45, 'bold')
-LARGE_FONT = ("Lato", 28, 'bold')
-SMALL_FONT = ("Lato", 20, 'bold')
-SMALLER_FONT = ("Lato", 18)
-SMALLERR_FONT = ("Lato", 14)
-SMALLEST_FONT = ("Lato", 8)
 
 # assign matplotlib plot style
 style.use("seaborn-whitegrid")
@@ -382,8 +375,6 @@ f2.subplots_adjust(left=0.13, right=0.95, bottom=0.19, top=0.93, hspace=0.3)
 f1.subplots_adjust(left=0.13, right=0.95, bottom=0.19, top=0.93, hspace=0.3)
 # f1.set_tight_layout(True)
 # f2.set_tight_layout(True)
-o2_dataList = ""
-h2o_dataList = ""
 
 ## set initial recording variable to false (changes to true when you click 'start recording')
 recording = False
@@ -468,7 +459,7 @@ class RPiReader(tk.Tk):
         p = p.read()
         # print(p)
         if "4" in p or "3" in p or "2" in p:
-            fuckitup('start')
+            disconnect('start')
             time.sleep(10)
             sys.exit()
 
@@ -810,60 +801,7 @@ class StartPage(tk.Frame):
     def on_show_frame(self, event):
         print('Start Page onShowFrame')
 
-##### Global Methods #####
-def fuckitup(how):
-    error_time = datetime.now()
-    error_file = "error entry " + str(error_time.strftime("%m_%d_%y_%I.%M.%S"))
-    pathE = '/home/pi/Desktop/ErrorLog/'
-    with open(os.path.join(pathE, error_file) + '.csv', 'w+', newline='') as o:
-        writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
 
-        writer1.writerow([str(error_file)])
-        if how == "start":
-            writer1.writerow(['DO NOT OPEN MULTIPLE INSTANCES OF TGVIEW'])
-            writer1.writerow(['CHECK REMOTE DESKTOP FOR RUNNING TEST'])
-        else:
-            if SerialInterface.meecoConnected == True and SerialInterface.deltafConnected == False:
-                writer1.writerow(['DELTAF WAS DISCONNECTED DURING TESTING'])
-                writer1.writerow(['LIST DETAILS OF FAILURE BELOW FOR REVIEW'])
-            elif SerialInterface.meecoConnected == False and SerialInterface.deltafConnected == True:
-                writer1.writerow(['MEECO WAS DISCONNECTED DURING TESTING'])
-                writer1.writerow(['LIST DETAILS OF FAILURE BELOW FOR REVIEW'])
-            elif SerialInterface.meecoConnected == False and SerialInterface.deltafConnected == False:
-                writer1.writerow(['BOTH ANALYZERS STOPPED COMMUNICATING DURING TESTING'])
-                writer1.writerow(['LIST DETAILS OF FAILURE BELOW FOR REVIEW'])
-        o.flush()
-
-    os.popen("mousepad " + "'" + os.path.join(pathE, error_file) + ".csv'")
-    time.sleep(0.5)
-
-    def fuckit():
-        sys.exit()
-
-    ######### error message should show error and close out program #######
-    fuck = Toplevel()
-    fuck.title("Error")
-    # Width and height for the Tk root window
-    w = 500
-    h = 180
-    # This gets the current screen width and height
-    ws = fuck.winfo_screenwidth()
-    hs = fuck.winfo_screenheight()
-    # Calculate the x and y coordinates based on the current screen size
-    sx = (ws / 2) - (w / 2)
-    sy = (hs / 2) - (h / 2)
-    # Open the root window in the middle of the screen
-    fuck.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
-    fuck.resizable(False, False)
-    fuck.config(bg="Grey25")
-    msg = Message(fuck, text="Error has been logged.\nPlease restart TGView.", width=500, bg="grey25", fg="grey85",
-                  font=LARGE_FONT)
-    msg.pack()
-    button = Button(fuck, text="EXIT", command=fuckit, width=20, height=2, bg="firebrick1", fg="white",
-                    activebackground="firebrick2", activeforeground="white", highlightbackground="firebrick1",
-                    relief=FLAT)
-    button['font'] = LARGER_FONT
-    button.pack()
 
 
 ### valindates input from user (used for writing int/float numbers to meeco... equipment controls)
@@ -1814,15 +1752,13 @@ def confirm_fields(start_stop):
         start_timet.set(start_time.strftime("%I:%M %p"))
 
         ##### global variable resets #######
-        global o2_dataList
-        global h2o_dataList
         global a1, a2
         global cycleO2, cycleH2O
 
         cycleH2O = 14
         cycleO2 = 14
-        o2_dataList = ''
-        h2o_dataList = ''
+        manageGraphData.o2data_string = ''
+        manageGraphData.h2odata_string = ''
         a1.cla()
         a2.cla()
 
@@ -1892,9 +1828,8 @@ def confirm_fields(start_stop):
         cycleO2 = 14
 
         # graph data reset#
-        global o2_dataList, h2o_dataList
-        o2_dataList = ''
-        h2o_dataList = ''
+        manageGraphData.o2data_string = ''
+        manageGraphData.h2odata_string = ''
 
         # start time reset#
         global start_time
@@ -2062,9 +1997,8 @@ def confirm_fields(start_stop):
         generatePDF()
 
         # graph data reset#
-        global o2_dataList, h2o_dataList
-        o2_dataList = ''
-        h2o_dataList = ''
+        manageGraphData.o2data_string = ''
+        manageGraphData.h2odata_string = ''
 
         # start time reset#
         global start_time
@@ -3290,108 +3224,31 @@ def animateh2o(i):
     global currentMode
     global currentUpper
     global currentLower
-    global h2o
-
     #### data gathering for h2o graph
     global xdata, ydata, point, ind, line
 
     def h2odataGrab():
         global cycleH2O
-        demo_mode = False
-        if SerialInterface.meecoConnected == True and var2.get() != 'radO2':
-            attempts = 0
-            while attempts < 6:
-                try:
+        h2o = 0
+        if var2.get() != 'radO2':
+            h2o_value = SerialInterface.get_valid_h2o(3)
+            currenth2o.set(h2o_value)
+            h2o = 999 if h2o_value == "N/A" else h2o_value
+            if recording == True and h2o_value == "N/A" and cycleH2O == 14:
+                print(
+                    "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
+                disconnect('disconnect')
 
-                    h2o = raw_to_ppb(SerialInterface.get_h20())  #### comment out for random data###
-                    # await asyncio.sleep(0.02)
-                    # time.sleep(0.02)
-                    h2o = round(float(h2o), 1)
-                    # currentRaw.set(round(float(raw_to_ppb(read_serial_float(0))), 1)) #### comment out for random data###
-                    SerialInterface.meecoConnected = True
-                    if h2o < 0:
-                        h2o = 0
-                    currenth2o.set(h2o)
-                    # dontPutThisHere
-                    break
-                except Exception as e:
-                    attempts += 1
-                    # await asyncio.sleep(0.02)
-                    # time.sleep(0.02)
-
-                    print(e)
-
-                    ##DEMO MODE
-                    h2o = random.random() * 100
-                    h2o = round(float(h2o), 1)
-                    SerialInterface.meecoConnected = True
-                    if h2o < 0:
-                        h2o = 0
-                    currenth2o.set(h2o)
-                    demo_mode = True
-                    break
-                    #####################
-                    currenth2o.set("N/A")
-                    h2o = -20
-                    if recording == True and SerialInterface.meecoConnected == False and cycleH2O == 14:
-                        print(
-                            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
-                        fuckitup('disconnect')
-                        break
-        elif SerialInterface.meecoConnected == False and var2.get() != 'radO2':
-            attempts = 0
-            while attempts < 6:
-                try:
-
-                    h2o = raw_to_ppb(get_h20(comPortMoist))  #### comment out for random data###
-                    h2o = round(float(h2o), 1)
-                    SerialInterface.meecoConnected = True
-                    print(h2o)
-                    if h2o < 0:
-                        h2o = 0
-                    currenth2o.set(h2o)
-                    # dontPutThisHere
-                    break
-                except Exception as e:
-                    attempts += 1
-                    # await asyncio.sleep(0.02)
-                    print(e)
-
-                    ##DEMO MODE
-                    h2o = random.random() * 100
-                    h2o = round(float(h2o), 1)
-                    SerialInterface.meecoConnected = True
-                    if h2o < 0:
-                        h2o = 0
-                    currenth2o.set(h2o)
-                    demo_mode = True
-                    break
-                    #####################
-
-                    SerialInterface.meecoConnected = False
-                    currenth2o.set("N/A")
-                    h2o = -20
-
-                    if recording == True and SerialInterface.meecoConnected == False and cycleH2O == 14:
-                        print(
-                            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
-                        fuckitup('disconnect')
-                        break
         elif var2.get() == 'radO2':
             currenth2o.set('N/A')
             h2o = 9999
 
-        if h2o < 0:
-            h2o = 0
-        if SerialInterface.meecoConnected == True:
-            # print('h2o is working')
-            if not demo_mode:
-                testingStatusMessageMeeco.set("")
-            else:
-                testingStatusMessageMeeco.set("Demo Mode")
-        if SerialInterface.meecoConnected == False:
+        if SerialInterface.meecoConnected:
+            testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
+        else:
             # print('h2o is fucked')
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
+            h2o = 0
 
         if not manageGraphData.update_h2o_values(h2o):
             return
@@ -3428,24 +3285,16 @@ def animateh2o(i):
                     label69.configure(bg=rec_bg)
                     label68.configure(bg=rec_bg)
 
-        cycleH2O += 1
-        if cycleH2O == 15:
-            cycleH2O = 1
+        cycleH2O = (cycleH2O + 1) % 15
+        if cycleH2O == 0:
             ## create a datetime stamp
             h2otime = datetime.now() - start_time
-
-            ## create data lists of x and y values
-            global h2o_dataList
-            global h2odataList
-            h2o_dataList = h2o_dataList + '\n' + str(round((h2otime.total_seconds()) / 60, 0)) + ',' + str(h2o)
-            # print("meeco "+str(round((h2otime.total_seconds())/60,5)))
-            # print("meeco "+str(round((h2otime.total_seconds())/60,0)))
+            manageGraphData.update_h2o_dataList(h2o, h2otime)
 
             #### meecoDrift is how much the interval is drifting from 1 minute ######
             global intervalH2O
             meecoDrift = round((h2otime.total_seconds()) / 60, 5) - round((h2otime.total_seconds()) / 60, 0)
             if round((h2otime.total_seconds()) / 60, 0) != 0.0:
-
                 if meecoDrift > 0:
                     intervalH2O -= math.sqrt(meecoDrift) * 400
                 else:
@@ -3455,6 +3304,7 @@ def animateh2o(i):
                 intervalH2O = 2000
             elif intervalH2O > 4000:
                 intervalH2O = 4000
+
             if party_time == False:
                 ani2.event_source.interval = int(intervalH2O)
             elif party_time == True:
@@ -3463,22 +3313,6 @@ def animateh2o(i):
             print("animateh2o " + str(round((h2otime.total_seconds()) / 60, 5)) + " " + str(
                 round((h2otime.total_seconds()) / 60, 0)) + " " + str(ani2.event_source.interval))
             # print(" meeco interval = " + str(ani2.event_source.interval))
-
-            h2odataList = h2o_dataList.split('\n')
-            h2odataList.pop(0)
-            initial_h2otick = h2odataList[0].split(',')
-            h2odataList[0] = "0," + initial_h2otick[1]
-            global h2oxList
-            global h2oyList
-            h2oxList = []
-            h2oyList = []
-            global x2
-            global y2
-            for eachLine in h2odataList:
-                if len(str(eachLine)) > 1:
-                    x2, y2 = eachLine.split(',')
-                    h2oxList.append(float(x2))
-                    h2oyList.append(float(y2))
 
         ###active graphing
 
@@ -3493,13 +3327,13 @@ def animateh2o(i):
             a2.set_xlabel('Time (minutes)')
             a2.set_ylabel('N/A')
         if var2.get() == 'radBoth':
-            h2oxMax = max(h2oxList)
+            h2oxMax = max(manageGraphData.h2oxList)
             a2.set_xlim([0, max(1, h2oxMax)])
             if manageGraphData.h2odata_min < 0:
                 a2.set_ylim(manageGraphData.h2odata_min - 10, manageGraphData.h2odata_max + 10)
             else:
                 a2.set_ylim(0 - 1, manageGraphData.h2odata_max + 10)
-            a2.plot(h2oxList, h2oyList, color='#2FA4FF', marker='.', picker=5, linewidth=1)
+            a2.plot(manageGraphData.h2oxList, manageGraphData.h2oyList, color='#2FA4FF', marker='.', picker=5, linewidth=1)
 
             # COMMENTED OUT 10/8/2020
             # if isinstance(title, str) and isinstance(tool_id, str):
@@ -3521,7 +3355,7 @@ def animateh2o(i):
                 pass
 
         if var2.get() == 'radH2O':
-            plot_axes_h2o(h2oxList, h2oyList, a2)
+            plot_axes_h2o(manageGraphData.h2oxList, manageGraphData.h2oyList, a2)
 
         h2ofileTitle = "H2O"
 
@@ -3530,7 +3364,7 @@ def animateh2o(i):
             h2oValuelist = []
             with open(os.path.join(pathF, h2ofileTitle) + '.csv', 'w+', newline='') as h:
                 writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
-                for eachLine in h2odataList:
+                for eachLine in manageGraphData.h2odataList:
                     writer2.writerow([eachLine])
                     everyLine = eachLine.split(",")
                     h2oValuelist.append(float(everyLine[1]))
@@ -3565,142 +3399,40 @@ def animateo2(i):  #### animation function. despite the name it actually animate
     #  it also functions to save csv files if the variable 'recording' is set to TRUE
 
     # try:
-
     def o2dataGrab():
         #### data gathering for o2 graph
         global cycleO2
-        demo_mode = False
         o2 = 0
-        if SerialInterface.deltafConnected == True and var2.get() != 'radH2O':
-            attempts = 0
-            while attempts < 15:
-
-                try:
-                    # await asyncio.sleep(0.02)
-                    # time.sleep(0.02)
-                    # print('..... attempting with ' + comPortOxygen + '.....')
-                    o2 = SerialInterface.get_O2()  #### comment out for random data###
-
-                    if 'e' in o2:
-                        currento2.set('N/A')
-                        o2 = round(float(o2), 1)
-                        SerialInterface.deltafConnected = False
-                    else:
-                        o2 = round(float(o2), 1)
-                        currento2.set(o2)
-                        SerialInterface.deltafConnected = True
-
-                    attempts = 15
-
-                    # dontPutThisHere
-                    break
-                except:
-                    # await asyncio.sleep(0.02)
-                    # time.sleep(0.02)
-                    attempts += 1
-                    if attempts > 14:
-                        ## DEMO MODE
-                        o2 = str(random.random() * 100)
-                        o2 = round(float(o2), 1)
-                        currento2.set(o2)
-                        SerialInterface.deltafConnected = True
-                        attempts = 15
-                        print('attempt FAILED for O2')
-                        demo_mode = True
-                        break
-                        ##############
-
-                        o2 = 9999
-                        SerialInterface.deltafConnected = False
-                        print('attempt FAILED for O2')
-                        currento2.set('N/A')
-                        if recording == True and SerialInterface.deltafConnected == False and cycleO2 == 14:
-                            print(
-                                "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
-                            fuckitup('disconnect')
-                            break
-
-        elif not SerialInterface.deltafConnected and var2.get() != 'radH2O':
-            attempts = 0
-            while attempts < 3:
-                try:
-                    # await asyncio.sleep(0.02)
-                    # time.sleep(0.02)
-                    # print('..... attempting with ' + comPortOxygen + '.....')
-                    o2 = SerialInterface.get_O2()  #### comment out for random data###
-
-                    # print(o2)
-                    if 'e' in o2:
-                        currento2.set('N/A')
-                        o2 = round(float(o2), 1)
-                        SerialInterface.deltafConnected = False
-                    else:
-                        o2 = round(float(o2), 1)
-                        currento2.set(o2)
-                        SerialInterface.deltafConnected = True
-
-                    attempts = 3
-                    # dontPutThisHere
-                    break
-                except:
-
-                    attempts += 1
-                    # await asyncio.sleep(0.02)
-                    # time.sleep(0.02)
-                    if attempts > 1:
-                        ## DEMO MODE
-                        o2 = str(random.random() * 100)
-                        o2 = round(float(o2), 1)
-                        currento2.set(o2)
-                        SerialInterface.deltafConnected = True
-                        attempts = 15
-                        demo_mode = True
-                        break
-                        #########################
-
-                        o2 = 9999
-                        SerialInterface.deltafConnected = False
-                        print('attempt FAILED for O2')
-                        currento2.set('N/A')
-                        if recording == True and SerialInterface.deltafConnected == False and cycleO2 == 14:
-                            print(
-                                "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
-                            fuckitup('disconnect')
-                            break
+        if var2.get() != 'radH2O':
+            o2_value = SerialInterface.get_valid_o2(3)
+            currento2.set(o2_value)
+            o2 = 999 if o2_value == "N/A" else o2_value
+            if recording and o2_value == "N/A" and cycleO2 == 14:
+                print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART "
+                      "TGVIEW\n\n\n\n\n")
+                disconnect('disconnect')
         elif var2.get() == 'radH2O':
             currento2.set('N/A')
             o2 = 9999
-        if SerialInterface.deltafConnected == True:
-            if not demo_mode:
-                # print('o2 is working')
-                testingStatusMessageDeltaf.set("")
-            else:
-                testingStatusMessageDeltaf.set("Demo Mode")
+
+        if SerialInterface.deltafConnected:
+            testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('o2 is fucked')
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            o2 = 0
 
         if not manageGraphData.update_o2_values(o2):
             return
 
-        cycleO2 += 1
-        if cycleO2 == 15:
-            cycleO2 = 1
-
+        cycleO2 = (cycleO2 + 1) % 15
+        if cycleO2 == 0:
             o2time = datetime.now() - start_time
-            global o2_dataList
-            global o2dataList
-            o2_dataList = o2_dataList + '\n' + str(round((o2time.total_seconds()) / 60, 0)) + ',' + str(o2)
-            # print("deltaf "+str(round((o2time.total_seconds())/60,5)))
-            # print("deltaf "+str(round((o2time.total_seconds())/60,0)))
-
-            #### deltaDrift is how much the interval is drifting from 1 minute ######
+            manageGraphData.update_o2_dataList(o2, o2time)
             deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
-
             ############################
             global intervalO2
             if round((o2time.total_seconds()) / 60, 0) != 0.0:
-
                 if deltaDrift > 0:
                     intervalO2 -= math.sqrt(deltaDrift) * 400
                 else:
@@ -3710,30 +3442,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 intervalO2 = 2000
             elif intervalO2 > 4000:
                 intervalO2 = 4000
-
             ani1.event_source.interval = int(intervalO2)
-            ############################
-
-            # print(" deltaf drift = " + str(deltaDrift))
-            # print(" deltaf interval = " + str(ani1.event_source.interval))
-            # print(str(round((o2time.total_seconds())/60,5))+" "+str(round((o2time.total_seconds())/60,0))+" "+str(ani1.event_source.interval))
-
-            o2dataList = o2_dataList.split('\n')
-            o2dataList.pop(0)
-            initial_tick = o2dataList[0].split(',')
-            # print(initial_tick[1])
-            o2dataList[0] = "0," + initial_tick[1]
-            global o2xList
-            global o2yList
-            o2xList = []
-            o2yList = []
-            global x1
-            global y1
-            for eachLine in o2dataList:
-                if len(str(eachLine)) > 1:
-                    x1, y1 = eachLine.split(',')
-                    o2xList.append(float(x1))
-                    o2yList.append(float(y1))
 
             ###active graphing
             global title
@@ -3742,39 +3451,16 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             a1.ticklabel_format(useOffset=False)
             markerStyle = '.'
             if var2.get() == 'radO2':
-                plot_axes_o2(o2xList, o2yList, a1)
-                # o2xMax = max(o2xList)
-                # if o2data_min < 0:
-                #     a1.set_ylim(o2data_min - 10, o2data_max + 10)
-                # else:
-                #     a1.set_ylim(0 - 1, o2data_max + 10)
-                # a1.set_xlim([0, max(1, o2xMax)])
-                # a1.plot(o2xList, o2yList, color='#60D500', marker=markerStyle, linewidth=1)
-                #
-                # # COMMENTED OUT 10/8/2020
-                # # if isinstance(title, str) and isinstance(tool_id, str):
-                # # a1.set_title(title+" "+tool_id, fontsize=28, pad=20)
-                # # else:
-                # # a1.set_title(title.get()+" "+tool_id.get(), fontsize=28, pad=20)
-                #
-                # a1.set_xlabel('Time (minutes)', color='w')
-                # a1.set_ylabel('Oxygen (PPB)', color='w')
-                # a1.tick_params(colors='w')
+                plot_axes_o2(manageGraphData.o2xList, manageGraphData.o2yList, a1)
 
             if var2.get() == 'radBoth':
-                o2xMax = max(o2xList)
+                o2xMax = max(manageGraphData.o2xList)
                 if manageGraphData.o2data_min < 0:
                     a1.set_ylim(manageGraphData.o2data_min - 10, manageGraphData.o2data_max + 10)
                 else:
                     a1.set_ylim(0 - 1, manageGraphData.o2data_max + 10)
                 a1.set_xlim([0, max(1, o2xMax)])
-                a1.plot(o2xList, o2yList, color='#60D500', marker=markerStyle, linewidth=1)
-
-                # COMMENTED OUT 10/8/2020
-                # if isinstance(title, str) and isinstance(tool_id, str):
-                # a1.set_title(tool_id+" "+title, fontsize=28, pad=20)
-                # else:
-                # a1.set_title(tool_id.get()+" "+title.get(), fontsize=28, pad=20)
+                a1.plot(manageGraphData.o2xList, manageGraphData.o2yList, color='#60D500', marker=markerStyle, linewidth=1)
 
                 a1.set_xlabel("Time (minutes)", color='w')
                 a1.set_ylabel("Oxygen (PPB)", color='w')
@@ -3794,7 +3480,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 o2Valuelist = []
                 with open(os.path.join(pathF, o2fileTitle) + '.csv', 'w+', newline='') as o:
                     writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
-                    for eachLine in o2dataList:
+                    for eachLine in manageGraphData.o2dataList:
                         writer1.writerow([eachLine])
                         everyLine = eachLine.split(",")
                         o2Valuelist.append(float(everyLine[1]))
@@ -3812,11 +3498,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             # basewidth = figure_conf['w']*figure_conf['dpi']
 
             f1.savefig('graphO2.png', facecolor=f1.get_facecolor(), edgecolor="none")
-            # imgg = Image.open('graphO2.png')
-            # wpercent = (basewidth / float(imgg.size[0]))
-            # hsize = int((float(imgg.size[1]) * float(wpercent) * 0.92))  # 0.84
-            # imgg = imgg.resize((basewidth, hsize), Image.ANTIALIAS)
-            # imgg.save('graphO2.png')
             img2 = ImageTk.PhotoImage(Image.open('graphO2.png'))
             img_o2.configure(image=img2)
             img_o2.image = img2
@@ -3883,7 +3564,7 @@ def stop_recording():
     o2Valuelist = []
     with open(os.path.join(path, o2fileTitle) + '.csv', 'w+', newline='') as o:
         writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
-        for eachLine in o2dataList:
+        for eachLine in manageGraphData.o2dataList:
             writer1.writerow([eachLine])
             everyLine = eachLine.split(",")
             o2Valuelist.append(float(everyLine[1]))
@@ -3894,7 +3575,7 @@ def stop_recording():
     h2oValuelist = []
     with open(os.path.join(path, h2ofileTitle) + '.csv', 'w+', newline='') as h:
         writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
-        for eachLine in h2odataList:
+        for eachLine in manageGraphData.h2odataList:
             writer2.writerow([eachLine])
             everyLine = eachLine.split(",")
             h2oValuelist.append(float(everyLine[1]))
@@ -3967,8 +3648,8 @@ def exportH2O(startscreen):
                 headerdata.append(row[0])
     if startscreen == False:  ## creating pdf from startscreen
 
-        H2OxbReset = h2oxList
-        H2Oyb = h2oyList
+        H2OxbReset = manageGraphData.h2oxList
+        H2Oyb = manageGraphData.h2oyList
 
         h2obAvgEdit = str(round(mean(H2Oyb), 1))
         h2obMaxEdit = str(round(max(H2Oyb), 1))
@@ -4178,8 +3859,8 @@ def exportO2(startscreen):
                 headerdata.append(row[0])
     if startscreen == False:  ## creating pdf from startscreen
 
-        O2xbReset = o2xList
-        O2yb = o2yList
+        O2xbReset = manageGraphData.o2xList
+        O2yb = manageGraphData.o2yList
 
         o2bAvgEdit = str(round(mean(O2yb), 1))
         o2bMaxEdit = str(round(max(O2yb), 1))
@@ -4499,10 +4180,10 @@ def exportBoth(startscreen):
 
         tracerflow_units = 'scfh'
         deltaflow_units = 'scfh'
-        O2xbReset = o2xList
-        O2yb = o2yList
-        H2OxbReset = h2oxList
-        H2Oyb = h2oyList
+        O2xbReset = manageGraphData.o2xList
+        O2yb = manageGraphData.o2yList
+        H2OxbReset = manageGraphData.h2oxList
+        H2Oyb = manageGraphData.h2oyList
 
         h2obAvgEdit = str(round(mean(H2Oyb), 1))
         h2obMaxEdit = str(round(max(H2Oyb), 1))
@@ -5238,7 +4919,6 @@ def manage_pdf():
             O2durationYfield = H2OdurationYfield
             durationWidth = 250
 
-            global h2o
             h2obAvgUnedit = str(round(mean(yy1), 1))
             h2obMaxUnedit = str(round(max(yy1), 1))
             h2obFinalUnedit = str(round(yy1[-1], 1))
