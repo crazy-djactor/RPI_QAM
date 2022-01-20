@@ -206,7 +206,12 @@ class SerialInterface:
                 attempts += 1
                 continue
             else:
-                return round(float(str_h2o), 1)
+                try:
+                    h2o = raw_to_ppb(str_h2o)
+                    return round(float(h2o), 1)
+                except:
+                    attempts += 1
+
         ##############
         print('attempt FAILED for h2o')
         return 'N/A'
