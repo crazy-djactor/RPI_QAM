@@ -91,7 +91,7 @@ recording = False
 ## set start_time (this is reset whenever start/stop_recording is clicked)
 start_time = datetime.now()
 global start_timee
-start_timee = start_time.strftime("%m_%d_%y_%I.%M.%S")
+start_timee = start_time.strftime("%m_%d_%y_%H.%M.%S")
 global start_timeez
 start_timeez = start_time.strftime("%m/%d/%y @ %I:%M %p")
 
@@ -1762,6 +1762,11 @@ def confirm_fields(start_stop):
             path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
                 header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
             global pathF
+            if os.path.exists(path):
+                try:
+                    shutil.rmtree(path)
+                except OSError as e:
+                    print("Error: %s - %s." % (e.filename, e.strerror))
             os.rename(pathF, path)
             pathF = path
 
@@ -4287,6 +4292,8 @@ def manage_pdf():
         # toop.config(bg="Grey25")
         folder = askopendirname(title='Choose Test to Edit', initialdir='/home/pi/TGView', foldercreation=False)
         print(folder)
+        if folder == '':
+            return
         os.chdir(folder)
         global O2csvFound, H2OcsvFound, BothcsvFound
         O2csvFound = False
