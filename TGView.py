@@ -5,6 +5,7 @@ import matplotlib
 from modules.AdjustFigure import AdjustFigure
 from GlobalConst import dir_TGView, root_path
 from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
+from modules.serial import SerialInterface
 from component.PopupWindow import PopupWindow
 
 matplotlib.use("TkAgg")
@@ -342,184 +343,6 @@ def write_serial_int(send, n):
         currentMode.set('Service')
 
 
-# gets O2 data and converts to ppb
-def get_O2(comPortOxygen):
-    ser = serial.Serial(
-        port=comPortOxygen, \
-        baudrate=9600, \
-        parity=serial.PARITY_NONE, \
-        stopbits=serial.STOPBITS_ONE, \
-        bytesize=serial.EIGHTBITS, \
-        timeout=1)
-
-    sleepy = 0.03
-    i = 0
-    fullcommand = bytearray([1, 2, 1, 0, 0, 3, 13])
-    ser.write(fullcommand)
-    ser.write(b' ')
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    deldata = ser.read(8)
-    data = str(binascii.hexlify(deldata[4:8]))
-    # print(str(binascii.hexlify(deldata)))
-    c = [data[i:i + 2] for i in range(0, len(data), 2)]
-    try:
-        byte1 = "{:08b}".format(int(c[1], base=16))
-        byte2 = "{:08b}".format(int(c[2], base=16))
-        byte3 = "{:08b}".format(int(c[3], base=16))
-        byte4 = "{:08b}".format(int(c[4], base=16))
-
-        o2_bin = byte1 + byte2 + byte3 + byte4
-        # print(o2_bin)
-        m = o2_bin[9:]
-        mantissa = 0
-        mantissa = (int(m[0]) * 2 ** 22 + int(m[1]) * 2 ** 21 + int(m[2]) * 2 ** 20 + int(m[3]) * \
-                    2 ** 19 + int(m[4]) * 2 ** 18 + int(m[5]) * 2 ** 17 + int(m[6]) * 2 ** 16 + int(m[7]) * \
-                    2 ** 15 + int(m[8]) * 2 ** 14 + int(m[9]) * 2 ** 13 + int(m[10]) * 2 ** 12 + int(m[11]) * \
-                    2 ** 11 + int(m[12]) * 2 ** 10 + int(m[13]) * 2 ** 9 + int(m[14]) * 2 ** 8 + int(m[15]) * \
-                    2 ** 7 + int(m[16]) * 2 ** 6 + int(m[17]) * 2 ** 5 + int(m[18]) * 2 ** 4 + int(m[19]) * \
-                    2 ** 3 + int(m[20]) * 2 ** 2 + int(m[21]) * 2 ** 1 + int(m[22]) * 2 ** 0) / 8388608
-
-        exponent = int(o2_bin[2:9], 2)
-        sign = (-1) ** (int(o2_bin[0], 2))
-
-        o2_ppm = sign * (2 ** (exponent - 127)) * (1 + mantissa)
-        o2_ppb = 1000 * o2_ppm
-
-        ser.close()
-        # print(o2_ppb)
-        return (str(o2_ppb))
-    except Exception as e:
-        print("get_O2 error:" + str(e))
-        pass
-
-
-########EXPERIMENTAL: use this copy of get_O2 and replace in animation function to try to figure out how to read over 2PPM
-def get_O2temp(comPortOxygen):
-    ser = serial.Serial(
-        port=comPortOxygen, \
-        baudrate=9600, \
-        parity=serial.PARITY_NONE, \
-        stopbits=serial.STOPBITS_ONE, \
-        bytesize=serial.EIGHTBITS, \
-        timeout=1)
-
-    sleepy = 0.01
-    i = 0
-    # fullcommand = bytearray([1,2,1,0,0,3,13])
-    # ser.write(fullcommand)
-    ser.write(bytearray([1]))
-    time.sleep(sleepy)
-    ser.write(bytearray([2]))
-    time.sleep(sleepy)
-    ser.write(bytearray([1]))
-    time.sleep(sleepy)
-    ser.write(bytearray([0]))
-    time.sleep(sleepy)
-    ser.write(bytearray([0]))
-    time.sleep(sleepy)
-    ser.write(bytearray([3]))
-    time.sleep(sleepy)
-    ser.write(bytearray([13]))
-    # ser.write(b' ')
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    deldata = ser.read(14)
-    data = str(binascii.hexlify(deldata[4:8]))
-    print(str(binascii.hexlify(deldata)))
-    print(str(binascii.hexlify(deldata[4:8])))
-    c = [data[i:i + 2] for i in range(0, len(data), 2)]
-    try:
-        byte1 = "{:08b}".format(int(c[1], base=16))
-        byte2 = "{:08b}".format(int(c[2], base=16))
-        byte3 = "{:08b}".format(int(c[3], base=16))
-        byte4 = "{:08b}".format(int(c[4], base=16))
-
-        o2_bin = byte1 + byte2 + byte3 + byte4
-        # print(o2_bin)
-        m = o2_bin[9:]
-        mantissa = 0
-        mantissa = (int(m[0]) * 2 ** 22 + int(m[1]) * 2 ** 21 + int(m[2]) * 2 ** 20 + int(m[3]) * \
-                    2 ** 19 + int(m[4]) * 2 ** 18 + int(m[5]) * 2 ** 17 + int(m[6]) * 2 ** 16 + int(m[7]) * \
-                    2 ** 15 + int(m[8]) * 2 ** 14 + int(m[9]) * 2 ** 13 + int(m[10]) * 2 ** 12 + int(m[11]) * \
-                    2 ** 11 + int(m[12]) * 2 ** 10 + int(m[13]) * 2 ** 9 + int(m[14]) * 2 ** 8 + int(m[15]) * \
-                    2 ** 7 + int(m[16]) * 2 ** 6 + int(m[17]) * 2 ** 5 + int(m[18]) * 2 ** 4 + int(m[19]) * \
-                    2 ** 3 + int(m[20]) * 2 ** 2 + int(m[21]) * 2 ** 1 + int(m[22]) * 2 ** 0) / 8388608
-
-        exponent = int(o2_bin[1:9], 2)
-        sign = (-1) ** (int(o2_bin[0], 2))
-
-        o2_ppm = sign * (2 ** (exponent - 127)) * (1 + mantissa)
-        o2_ppb = 1000 * o2_ppm
-
-        ser.close()
-        print(o2_ppb)
-        return (str(o2_ppb))
-
-    except Exception as e:
-        print("get_O2 error:" + str(e))
-        pass
-
-
-# gets raw h2o data: need to use raw_to_ppb function to convert to ppb
-def get_h20(comPortMoist):
-    data = bytearray()
-    echo = bytearray()
-    command = bytearray([146])
-    operand = bytearray([1])
-    sleepy = 0.02
-
-    ser = serial.Serial(
-        port=comPortMoist, \
-        baudrate=9600, \
-        parity=serial.PARITY_NONE, \
-        stopbits=serial.STOPBITS_ONE, \
-        bytesize=serial.EIGHTBITS, \
-        timeout=1)
-
-    # time.sleep(sleepy)
-    data = bytearray()
-    ser.write(command)  # send command byte
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    echo = ser.read(1)  # recieve command byte
-    data = data + echo
-
-    ser.write(operand)
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    echo = ser.read(2)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-    return (data)
-    # await asyncio.sleep(sleepy)
-    # time.sleep(sleepy)
-    ser.close()
-
-
 #####GUI
 
 # assign font for final PDF graphs
@@ -650,50 +473,9 @@ class RPiReader(tk.Tk):
             sys.exit()
 
         ####Check to see which serial port sounds like a meeco and which sounds like a deltaf
-        def serial_checker():
-            global deltafConnected
-            global meecoConnected
-            global comPortOxygen
-            # #await asyncio.sleep(0.9)
-            time.sleep(0.9)
-            try:
-                comPortOxygen = '/dev/ttyUSB1'
-                testComOxygen = get_O2(comPortOxygen=comPortOxygen)
-                deltafConnected = True
 
-                if 'e' in testComOxygen:
-                    time.sleep(0.2)
-                    try:
-                        testComOxygen = get_O2(comPortOxygen)
-                        deltafConnected = True
-                        # print("deltaf connected")
-                        # await asyncio.sleep(0.2)
-                        time.sleep(0.2)
-                    except:
-                        deltafConnected = False
-                    comPortOxygen = '/dev/ttyUSB0'
-                    # await asyncio.sleep(0.2)
-                    time.sleep(0.2)
-            except:
-                deltafConnected = False
-                print("deltaf not connected")
-                pass
 
-            global comPortMoist
-            comPortMoist = '/dev/ttyUSB0'
-            try:
-                testComMoisture = raw_to_ppb(get_h20(comPortMoist))
-                comPortMoist = '/dev/ttyUSB0'
-                meecoConnected = True
-            except:
-                comPortMoist = '/dev/ttyUSB1'
-                meecoConnected = False
-
-            #         print("meeco not connected")
-            # #await asyncio.sleep(1)
-            time.sleep(1)
-
-        serial_checker()
+        SerialInterface.serial_checker()
         # loop = asyncio.new_event_loop()
         # loop.run_until_complete(serial_checker())
         # loop.close()
@@ -1041,13 +823,13 @@ def fuckitup(how):
             writer1.writerow(['DO NOT OPEN MULTIPLE INSTANCES OF TGVIEW'])
             writer1.writerow(['CHECK REMOTE DESKTOP FOR RUNNING TEST'])
         else:
-            if meecoConnected == True and deltafConnected == False:
+            if SerialInterface.meecoConnected == True and SerialInterface.deltafConnected == False:
                 writer1.writerow(['DELTAF WAS DISCONNECTED DURING TESTING'])
                 writer1.writerow(['LIST DETAILS OF FAILURE BELOW FOR REVIEW'])
-            elif meecoConnected == False and deltafConnected == True:
+            elif SerialInterface.meecoConnected == False and SerialInterface.deltafConnected == True:
                 writer1.writerow(['MEECO WAS DISCONNECTED DURING TESTING'])
                 writer1.writerow(['LIST DETAILS OF FAILURE BELOW FOR REVIEW'])
-            elif meecoConnected == False and deltafConnected == False:
+            elif SerialInterface.meecoConnected == False and SerialInterface.deltafConnected == False:
                 writer1.writerow(['BOTH ANALYZERS STOPPED COMMUNICATING DURING TESTING'])
                 writer1.writerow(['LIST DETAILS OF FAILURE BELOW FOR REVIEW'])
         o.flush()
@@ -1612,13 +1394,13 @@ class PageOne(tk.Frame):
 
         global currentRaw
         currentRaw = StringVar()
-        if deltafConnected == True and meecoConnected == True:
+        if SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == True:
             testingStatusMessageMeeco.set('')
             testingStatusMessageDeltaf.set('')
-        elif deltafConnected == True and meecoConnected == False:
+        elif SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == False:
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
             testingStatusMessageDeltaf.set('')
-        elif deltafConnected == False and meecoConnected == True:
+        elif SerialInterface.deltafConnected == False and SerialInterface.meecoConnected == True:
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
             testingStatusMessageMeeco.set("")
         else:
@@ -3514,20 +3296,19 @@ def animateh2o(i):
     global xdata, ydata, point, ind, line
 
     def h2odataGrab():
-        global meecoConnected
         global cycleH2O
         demo_mode = False
-        if meecoConnected == True and var2.get() != 'radO2':
+        if SerialInterface.meecoConnected == True and var2.get() != 'radO2':
             attempts = 0
             while attempts < 6:
                 try:
 
-                    h2o = raw_to_ppb(get_h20(comPortMoist))  #### comment out for random data###
+                    h2o = raw_to_ppb(SerialInterface.get_h20())  #### comment out for random data###
                     # await asyncio.sleep(0.02)
                     # time.sleep(0.02)
                     h2o = round(float(h2o), 1)
                     # currentRaw.set(round(float(raw_to_ppb(read_serial_float(0))), 1)) #### comment out for random data###
-                    meecoConnected = True
+                    SerialInterface.meecoConnected = True
                     if h2o < 0:
                         h2o = 0
                     currenth2o.set(h2o)
@@ -3543,7 +3324,7 @@ def animateh2o(i):
                     ##DEMO MODE
                     h2o = random.random() * 100
                     h2o = round(float(h2o), 1)
-                    meecoConnected = True
+                    SerialInterface.meecoConnected = True
                     if h2o < 0:
                         h2o = 0
                     currenth2o.set(h2o)
@@ -3552,19 +3333,19 @@ def animateh2o(i):
                     #####################
                     currenth2o.set("N/A")
                     h2o = -20
-                    if recording == True and meecoConnected == False and cycleH2O == 14:
+                    if recording == True and SerialInterface.meecoConnected == False and cycleH2O == 14:
                         print(
                             "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                         fuckitup('disconnect')
                         break
-        elif meecoConnected == False and var2.get() != 'radO2':
+        elif SerialInterface.meecoConnected == False and var2.get() != 'radO2':
             attempts = 0
             while attempts < 6:
                 try:
 
                     h2o = raw_to_ppb(get_h20(comPortMoist))  #### comment out for random data###
                     h2o = round(float(h2o), 1)
-                    meecoConnected = True
+                    SerialInterface.meecoConnected = True
                     print(h2o)
                     if h2o < 0:
                         h2o = 0
@@ -3579,7 +3360,7 @@ def animateh2o(i):
                     ##DEMO MODE
                     h2o = random.random() * 100
                     h2o = round(float(h2o), 1)
-                    meecoConnected = True
+                    SerialInterface.meecoConnected = True
                     if h2o < 0:
                         h2o = 0
                     currenth2o.set(h2o)
@@ -3587,11 +3368,11 @@ def animateh2o(i):
                     break
                     #####################
 
-                    meecoConnected = False
+                    SerialInterface.meecoConnected = False
                     currenth2o.set("N/A")
                     h2o = -20
 
-                    if recording == True and meecoConnected == False and cycleH2O == 14:
+                    if recording == True and SerialInterface.meecoConnected == False and cycleH2O == 14:
                         print(
                             "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                         fuckitup('disconnect')
@@ -3602,13 +3383,13 @@ def animateh2o(i):
 
         if h2o < 0:
             h2o = 0
-        if meecoConnected == True:
+        if SerialInterface.meecoConnected == True:
             # print('h2o is working')
             if not demo_mode:
                 testingStatusMessageMeeco.set("")
             else:
                 testingStatusMessageMeeco.set("Demo Mode")
-        if meecoConnected == False:
+        if SerialInterface.meecoConnected == False:
             # print('h2o is fucked')
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
 
@@ -3787,11 +3568,10 @@ def animateo2(i):  #### animation function. despite the name it actually animate
 
     def o2dataGrab():
         #### data gathering for o2 graph
-        global deltafConnected
         global cycleO2
         demo_mode = False
         o2 = 0
-        if deltafConnected == True and var2.get() != 'radH2O':
+        if SerialInterface.deltafConnected == True and var2.get() != 'radH2O':
             attempts = 0
             while attempts < 15:
 
@@ -3799,16 +3579,16 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                     # await asyncio.sleep(0.02)
                     # time.sleep(0.02)
                     # print('..... attempting with ' + comPortOxygen + '.....')
-                    o2 = get_O2(comPortOxygen)  #### comment out for random data###
+                    o2 = SerialInterface.get_O2()  #### comment out for random data###
 
                     if 'e' in o2:
                         currento2.set('N/A')
                         o2 = round(float(o2), 1)
-                        deltafConnected = False
+                        SerialInterface.deltafConnected = False
                     else:
                         o2 = round(float(o2), 1)
                         currento2.set(o2)
-                        deltafConnected = True
+                        SerialInterface.deltafConnected = True
 
                     attempts = 15
 
@@ -3823,7 +3603,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                         o2 = str(random.random() * 100)
                         o2 = round(float(o2), 1)
                         currento2.set(o2)
-                        deltafConnected = True
+                        SerialInterface.deltafConnected = True
                         attempts = 15
                         print('attempt FAILED for O2')
                         demo_mode = True
@@ -3831,33 +3611,33 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                         ##############
 
                         o2 = 9999
-                        deltafConnected = False
+                        SerialInterface.deltafConnected = False
                         print('attempt FAILED for O2')
                         currento2.set('N/A')
-                        if recording == True and deltafConnected == False and cycleO2 == 14:
+                        if recording == True and SerialInterface.deltafConnected == False and cycleO2 == 14:
                             print(
                                 "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                             fuckitup('disconnect')
                             break
 
-        elif not deltafConnected and var2.get() != 'radH2O':
+        elif not SerialInterface.deltafConnected and var2.get() != 'radH2O':
             attempts = 0
             while attempts < 3:
                 try:
                     # await asyncio.sleep(0.02)
                     # time.sleep(0.02)
                     # print('..... attempting with ' + comPortOxygen + '.....')
-                    o2 = get_O2(comPortOxygen)  #### comment out for random data###
+                    o2 = SerialInterface.get_O2()  #### comment out for random data###
 
                     # print(o2)
                     if 'e' in o2:
                         currento2.set('N/A')
                         o2 = round(float(o2), 1)
-                        deltafConnected = False
+                        SerialInterface.deltafConnected = False
                     else:
                         o2 = round(float(o2), 1)
                         currento2.set(o2)
-                        deltafConnected = True
+                        SerialInterface.deltafConnected = True
 
                     attempts = 3
                     # dontPutThisHere
@@ -3872,17 +3652,17 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                         o2 = str(random.random() * 100)
                         o2 = round(float(o2), 1)
                         currento2.set(o2)
-                        deltafConnected = True
+                        SerialInterface.deltafConnected = True
                         attempts = 15
                         demo_mode = True
                         break
                         #########################
 
                         o2 = 9999
-                        deltafConnected = False
+                        SerialInterface.deltafConnected = False
                         print('attempt FAILED for O2')
                         currento2.set('N/A')
-                        if recording == True and deltafConnected == False and cycleO2 == 14:
+                        if recording == True and SerialInterface.deltafConnected == False and cycleO2 == 14:
                             print(
                                 "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                             fuckitup('disconnect')
@@ -3890,7 +3670,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         elif var2.get() == 'radH2O':
             currento2.set('N/A')
             o2 = 9999
-        if deltafConnected == True:
+        if SerialInterface.deltafConnected == True:
             if not demo_mode:
                 # print('o2 is working')
                 testingStatusMessageDeltaf.set("")
