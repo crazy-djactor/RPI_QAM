@@ -1,5 +1,6 @@
 # converts raw h2o data to ppb
 import binascii
+import sys
 
 from modules.AdjustFigure import AdjustFigure
 
@@ -225,3 +226,45 @@ def IEEE754(n):
     databyte5 = bytearray([int(byte5, 2)])
 
     return (databyte1, databyte2, databyte3, databyte4, databyte5)
+
+
+### valindates input from user (used for writing int/float numbers to meeco... equipment controls)
+def validate_input(new_input):
+    valid_chars = " -_.()qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789"
+    if all(c in valid_chars for c in new_input) == True and len(new_input) < 21:
+        # print("okay")
+        return True
+    else:
+        # print("FUCK")
+        return False
+
+
+def limit_character(new_input):
+    if len(new_input) < 21:
+        return True
+    else:
+        return False
+
+
+def limit_comment(new_input):
+    if len(new_input) < 60:
+        return True
+    else:
+        return False
+
+
+# see above
+def retreive_input(inputs):
+    inputValue = inputs.get("1.0", "end-1c")
+    return inputValue
+
+###### Close TG View
+def close_program():
+    sys.exit()
+
+
+def incremental_range(start, stop, inc):
+    value = start
+    while value < stop:
+        yield value
+        value += inc

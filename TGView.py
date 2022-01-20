@@ -3,10 +3,13 @@
 import matplotlib
 
 from GlobalConst import *
+
 from component.PopupWindow import PopupWindow
 from component.disconnect import disconnect
 from modules.AdjustFigure import AdjustFigure
-from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
+from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test, close_program, \
+    validate_input, limit_character, incremental_range
+from modules.context import AppContext
 from modules.serial import SerialInterface
 
 matplotlib.use("TkAgg")
@@ -46,7 +49,6 @@ import os, sys
 from tkinter import Toplevel
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  ##required for loading certain images
-QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
 
 #### initial animation intervals are adjusted later###
 intervalO2 = 3500
@@ -89,11 +91,6 @@ f1.subplots_adjust(left=0.13, right=0.95, bottom=0.19, top=0.93, hspace=0.3)
 recording = False
 
 ## set start_time (this is reset whenever start/stop_recording is clicked)
-start_time = datetime.now()
-global start_timee
-start_timee = start_time.strftime("%m_%d_%y_%I.%M.%S")
-global start_timeez
-start_timeez = start_time.strftime("%m/%d/%y @ %I:%M %p")
 
 ##assign global cycle counts and set to plot the next data grab##
 global cycleO2, cycleH2O
@@ -139,7 +136,7 @@ class Splash(tk.Toplevel):
         # label1.config(bg="grey25", fg='white')
 
         ### Current time and date display for Splash Screen - COMMENTED OUT 9/4/2020
-        # label3 = tk.Label(self, text=start_timeez, font=("Helvetica", 58, 'bold'))
+        # label3 = tk.Label(self, text=AppContext.start_timeez, font=("Helvetica", 58, 'bold'))
         # label3.place(x=splashXField,y=splashYField+splashYPadding*4.2)
         # label3.config(bg="grey25", fg='white')
         self.update()
@@ -267,19 +264,17 @@ class StartPage(tk.Frame):
         self.configure(background="grey25")
 
         ## place holder for testing status messages. Warns user when analyzer is disconnected
-        global testingStatusMessageMeeco
-        testingStatusMessageMeeco = StringVar(value="")
-        global testingStatusMessageDeltaf
-        testingStatusMessageDeltaf = StringVar(value="")
+        AppContext.testingStatusMessageMeeco = StringVar(value="")
+        AppContext.testingStatusMessageDeltaf = StringVar(value="")
 
         deltafStatusMessageXfield = 120
         meecoStatusMessageXfield = 1380
         statusMessageYfield = 145
-        label = tk.Label(self, textvariable=testingStatusMessageDeltaf, font=("Lato", 26, 'bold'))
+        label = tk.Label(self, textvariable=AppContext.testingStatusMessageDeltaf, font=("Lato", 26, 'bold'))
         label.config(bg="grey25", fg="firebrick1")
         label.place(x=deltafStatusMessageXfield, y=statusMessageYfield)
 
-        label = tk.Label(self, textvariable=testingStatusMessageMeeco, font=("Lato", 26, 'bold'))
+        label = tk.Label(self, textvariable=AppContext.testingStatusMessageMeeco, font=("Lato", 26, 'bold'))
         label.config(bg="grey25", fg="firebrick1")
         label.place(x=meecoStatusMessageXfield, y=statusMessageYfield)
 
@@ -336,7 +331,7 @@ class StartPage(tk.Frame):
         tracer_spec = header_list[17]
         ### create initial path (this is only used if the user never starts test)
         global pathstart
-        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + start_timee
+        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + AppContext.start_timee
 
         ### var2 determines which analyzer is talking
         global var2
@@ -511,44 +506,6 @@ class StartPage(tk.Frame):
         print('Start Page onShowFrame')
 
 
-
-
-### valindates input from user (used for writing int/float numbers to meeco... equipment controls)
-def validate_input(new_input):
-    valid_chars = " -_.()qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789"
-    if all(c in valid_chars for c in new_input) == True and len(new_input) < 21:
-        # print("okay")
-        return True
-    else:
-        # print("FUCK")
-        return False
-
-
-def limit_character(new_input):
-    if len(new_input) < 21:
-        return True
-    else:
-        return False
-
-
-def limit_comment(new_input):
-    if len(new_input) < 60:
-        return True
-    else:
-        return False
-
-
-# see above
-def retreive_input(inputs):
-    inputValue = inputs.get("1.0", "end-1c")
-    return inputValue
-
-
-###### Close TG View
-def close_program():
-    sys.exit()
-
-
 ###### About TG View Window
 # Displays relevant info such as the current version/build number
 def about_window():
@@ -586,7 +543,7 @@ def about_window():
     label4 = tk.Label(topA, text="Application opened:", bg="grey25", fg='orange', font=(aboutFont, 40, 'bold'))
     label4.place(relx=.5, rely=.12, anchor="center")
 
-    label4 = tk.Label(topA, text=start_timeez, bg="grey25", fg='white', font=(aboutFont, 40, 'bold'))
+    label4 = tk.Label(topA, text=AppContext.start_timeez, bg="grey25", fg='white', font=(aboutFont, 40, 'bold'))
     label4.place(relx=.5, rely=.26, anchor="center")
 
     ##### equipment controls title
@@ -1042,43 +999,42 @@ class PageOne(tk.Frame):
         global currentRaw
         currentRaw = StringVar()
         if SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == True:
-            testingStatusMessageMeeco.set('')
-            testingStatusMessageDeltaf.set('')
+            AppContext.testingStatusMessageMeeco.set('')
+            AppContext.testingStatusMessageDeltaf.set('')
         elif SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == False:
-            testingStatusMessageMeeco.set("Check Tracer 2 Connection")
-            testingStatusMessageDeltaf.set('')
+            AppContext.testingStatusMessageMeeco.set("Check Tracer 2 Connection")
+            AppContext.testingStatusMessageDeltaf.set('')
         elif SerialInterface.deltafConnected == False and SerialInterface.meecoConnected == True:
-            testingStatusMessageDeltaf.set("Check DeltaF Connection")
-            testingStatusMessageMeeco.set("")
+            AppContext.testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            AppContext.testingStatusMessageMeeco.set("")
         else:
-            testingStatusMessageMeeco.set("Check Tracer 2 Connection")
-            testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            AppContext.testingStatusMessageMeeco.set("Check Tracer 2 Connection")
+            AppContext.testingStatusMessageDeltaf.set("Check DeltaF Connection")
 
-        label = tk.Label(self, textvariable=testingStatusMessageDeltaf, font=("Helvetica", 38, 'bold'), wraplength=500,
+        label = tk.Label(self, textvariable=AppContext.testingStatusMessageDeltaf, font=("Helvetica", 38, 'bold'), wraplength=500,
                          justify="center")
         label.config(bg="grey25", fg="firebrick1")
         label.place(x=50, y=825)  # (x=50,y=60)
 
-        label = tk.Label(self, textvariable=testingStatusMessageMeeco, font=("Helvetica", 38, 'bold'), wraplength=500,
+        label = tk.Label(self, textvariable=AppContext.testingStatusMessageMeeco, font=("Helvetica", 38, 'bold'), wraplength=500,
                          justify="center")
         label.config(bg="grey25", fg="firebrick1")
         label.place(x=1520, y=825)  # (x=1220,y=60)
 
         self.configure(background="grey25")
-        global start_timet
-        start_timet = StringVar(value='0')
-        start_timet.set(start_time.strftime("%I:%M %p"))
+
+        AppContext.start_timet = StringVar(value='0')
+        AppContext.start_timet.set(AppContext.start_time.strftime("%I:%M %p"))
 
         global start_timeRec
         start_timeRec = StringVar(value='0')
-        start_timeRec.set(start_time.strftime("%I:%M %p"))
+        start_timeRec.set(AppContext.start_time.strftime("%I:%M %p"))
 
         global start_dateRec
         start_dateRec = StringVar(value='0')
-        start_dateRec.set(start_time.strftime("%-m/%-d/%y"))
+        start_dateRec.set(AppContext.start_time.strftime("%-m/%-d/%y"))
 
-        global directory
-        directory = dir_TGView
+        AppContext.directory = dir_TGView
         padx = 300
         pady = 120
         graphXfield = 10  # 110
@@ -1185,7 +1141,7 @@ class PageOne(tk.Frame):
         self.label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
         self.label_time.config(bg="grey35", fg="white")
 
-        self.label_time_value = tk.Label(self, textvariable=start_timet, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
+        self.label_time_value = tk.Label(self, textvariable=AppContext.start_timet, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
         self.label_time_value.place(x=labels_axis['label_time_value_x'], y=labels_axis['label_time_value_y'])
 
         # Start Date Display
@@ -1236,8 +1192,7 @@ class PageOne(tk.Frame):
             self.label16.configure(bg="IndianRed")
 
     def choose_directory(self):
-        global directory
-        directory = filedialog.askdirectory()
+        AppContext.directory = filedialog.askdirectory()
 
     ### Stop Recording Function: changes 'recording' to False. appends header.csv with stoptime and test info. rewrites filepath to match stoptime
     def stop(self):
@@ -1261,7 +1216,7 @@ class PageOne(tk.Frame):
         stop_timeet = stop_time.strftime("%m_%d_%y_%H.%M.%S")
 
         global time_elapsed
-        time_elapsed = stop_time - start_time
+        time_elapsed = stop_time - AppContext.start_time
         time_elapsed = time_elapsed_string(time_elapsed)
 
         if var2.get() != 'radH2O':
@@ -1293,15 +1248,14 @@ class PageOne(tk.Frame):
             h2oFinalValueVar = StringVar(value=h2oFinalValue)
 
         global path
-        directory = dir_TGView
-        path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
-            header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
-        global pathF
-        os.rename(pathF, path)
-        pathF = path
+        AppContext.directory = dir_TGView
+        path = AppContext.directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
+            header_list[2]) + "_" + str(header_list[0]) + "_" + AppContext.start_timee
+        os.rename(AppContext.pathF, path)
+        AppContext.pathF = path
         self.headerFileTitle = "Header"
         # path = directory + '/' + str(title.get())
-        with open(os.path.join(pathF, self.headerFileTitle) + '.csv', 'a', newline='') as c:
+        with open(os.path.join(AppContext.pathF, self.headerFileTitle) + '.csv', 'a', newline='') as c:
             writer3 = csv.writer(c)
             writer3.writerow([stop_time])
             if var2.get() != 'radH2O':
@@ -1320,11 +1274,11 @@ class PageOne(tk.Frame):
                 writer4.writerow([row])
             d.close()
         # if o2test_passing == True and h2otest_passing == True:
-        #        pathG = os.path.join(os.path.dirname(pathF),"P_"+os.path.basename(pathF))
+        #        pathG = os.path.join(os.path.dirname(AppContext.pathF),"P_"+os.path.basename(AppContext.pathF))
         # else:
-        #        pathG = os.path.join(os.path.dirname(pathF),"F_"+os.path.basename(pathF))
-        # os.rename(pathF,pathG)
-        # pathF = pathG
+        #        pathG = os.path.join(os.path.dirname(AppContext.pathF),"F_"+os.path.basename(AppContext.pathF))
+        # os.rename(AppContext.pathF,pathG)
+        # AppContext.pathF = pathG
         confirm_fields(start_stop='stop')
 
     def on_show_frame(self, event):
@@ -1434,8 +1388,6 @@ def confirm_fields(start_stop):
 
     top4.configure(background="grey25")
 
-    global pathF
-
     # --------------------------------------------------------------------------------#
     #                                  COMMANDS                                      #
     # --------------------------------------------------------------------------------#
@@ -1449,16 +1401,9 @@ def confirm_fields(start_stop):
         red_green = 'green'
         on_off = "Recording"
 
-        global start_time
-        start_time = datetime.now()
-        global start_timee
-        start_timee = start_time.strftime("%m_%d_%y_%H.%M.%S")
-        global start_timea
-        start_timea = start_time.strftime("%H:%M  %m/%d/%y")
-
-        global start_timet
-        # start_timet.set(start_time.strftime("%I:%M %p  %-m/%-d/%y"))
-        start_timet.set(start_time.strftime("%I:%M %p"))
+        AppContext.start_time = datetime.now()
+        AppContext.start_timee = AppContext.start_time.strftime("%m_%d_%y_%H.%M.%S")
+        AppContext.start_timet.set(AppContext.start_time.strftime("%I:%M %p"))
 
         ##### global variable resets #######
         global a1, a2
@@ -1472,13 +1417,13 @@ def confirm_fields(start_stop):
         a2.cla()
 
         headerFileTitle = "Header"
-        path = directory + '/' + str(building.get()) + "_" + str(tool_id.get()) + "_" + str(location.get()) + "_" + str(
-            title.get()) + "_" + start_timee
+        path = AppContext.directory + '/' + str(building.get()) + "_" + str(tool_id.get()) + "_" + str(location.get()) + "_" + str(
+            title.get()) + "_" + AppContext.start_timee
         i = 0
 
         os.mkdir(path)
-        global pathF
-        pathF = str(path)
+
+        AppContext.pathF = str(path)
 
         header_list[0] = title.get()
         header_list[1] = client.get()
@@ -1546,148 +1491,19 @@ def confirm_fields(start_stop):
 
         # delete entire test folder#
         if start_stop == 'start' or start_stop == 'stop':
-            global pathF
-            shutil.rmtree(pathF)  # "pathF" path is created from new test
+
+            shutil.rmtree(AppContext.pathF)  # "AppContext.pathF" path is created from new test
 
         elif start_stop == 'manage':
-            ### variable resets ###
-            try:
-                global newStartTime
-                del newStartTime
-                print("deleted newStartTime")
-            except:
-                print("no newStartTime to delete")
-                pass
-            try:
-                global oldStartTimeRH2O
-                del oldStartTimeRH2O
-                print("deleted oldStartTimeRH2O")
-            except:
-                print("no oldStartTimeRH2O to delete")
-                pass
-            try:
-                global newStopTime
-                del newStopTime
-            except:
-                print("no newStartTime to delete")
-                pass
-            try:
-                global oldStopTimeRH2O
-                del oldStopTimeRH2O
-                print("deleted oldStopTimeRH2O")
-            except:
-                print("no newStartTime to delete")
-                pass
-            try:
-                global newStartTimeO2
-                del newStartTimeO2
-                print("deleted newStartTimeO2")
-            except:
-                print("no newStartTimeO2 to delete")
-                pass
-
-            try:
-                global oldStartTimeO2
-                del oldStartTimeO2
-                print("deleted oldStartTimeO2")
-            except:
-                print("no oldStartTimeO2 to delete")
-                pass
-            try:
-                global newStopTimeO2
-                del newStopTimeO2
-                print("deleted newStopTimeO2")
-            except:
-                print("no newStopTimeO2 to delete")
-                pass
-
-            try:
-                global oldStopTimeO2
-                del oldStopTimeO2
-                print("deleted oldStopTimeO2")
-            except:
-                print("no oldStopTimeO2 to delete")
-                pass
-            try:
-                global o2bAvgEdit
-                del o2bAvgEdit
-                print("deleted o2bAvgEdit")
-            except:
-                print("no o2bAvgEdit to delete")
-                pass
-            try:
-                global o2bAvgUnedit
-                del o2bAvgUnedit
-                print("deleted o2bAvgUnedit")
-            except:
-                print("no o2bAvgUnedit to delete")
-                pass
-            try:
-                global o2bMaxEdit
-                del o2bMaxEdit
-                print("deleted o2bMaxEdit")
-            except:
-                print("no o2bMaxEdit to delete")
-                pass
-            try:
-                global o2bMaxUnedit
-                del o2bMaxUnedit
-                print("deleted o2bMaxUnedit")
-            except:
-                print("no o2bMaxUnedit to delete")
-                pass
-            try:
-                global o2bFinalEdit
-                del o2bFinalEdit
-                print("deleted o2bFinalEdit")
-            except:
-                print("no o2bFinalEdit to delete")
-                pass
-            try:
-                global o2bFinalUnedit
-                del o2bFinalUnedit
-                print("deleted o2bFinalUnedit")
-            except:
-                print("no newStartTime to delete")
-                pass
-            try:
-                global h2obAvgEdit
-                del h2obAvgEdit
-                print("deleted h2obAvgEdit")
-            except:
-                print("no h2obAvgEdit to delete")
-                pass
-            try:
-                global h2obAvgUnedit
-                del h2obAvgUnedit
-                print("deleted h2obAvgUnedit")
-            except:
-                print("no h2obAvgUnedit to delete")
-                pass
-            try:
-                global h2obFinalEdit
-                del h2obFinalEdit
-                print("deleted h2obFinalEdit")
-            except:
-                print("no h2obFinalEdit to delete")
-                pass
-            try:
-                global h2obFinalUnedit
-                del h2obFinalUnedit
-                print("deleted h2obFinalUnedit")
-            except:
-                print("no h2obFinalUnedit to delete")
-                pass
             shutil.rmtree(folder)  # "folder" path is selected by user
-            top.destroy()
+            AppContext.opencv_toplevel.destroy()
 
-        top46.destroy()
         top4.destroy()
         '''                             ### possible "are you sure" window for delete test button ####
             result = messagebox.askquestion("Delete", "Are You Sure?", icon='warning')
             if result == 'yes':
 
-                shutil.rmtree(pathF)
+                shutil.rmtree(AppContext.pathF)
                 top4.destroy()
             else:
                 top4.destroy()
@@ -1757,16 +1573,16 @@ def confirm_fields(start_stop):
         header_list.append(tracer_spec.get())
 
         global path
-        directory = dir_TGView
+        AppContext.directory = dir_TGView
         if start_stop == 'stop':
-            path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
-                header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
-            global pathF
-            os.rename(pathF, path)
-            pathF = path
+            path = AppContext.directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
+                header_list[2]) + "_" + str(header_list[0]) + "_" + AppContext.start_timee
+
+            os.rename(AppContext.pathF, path)
+            AppContext.pathF = path
 
         if start_stop == 'manage':
-            pathF = folder
+            AppContext.pathF = folder
 
         ### adjust Header_default with new field names
         with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
@@ -1776,108 +1592,101 @@ def confirm_fields(start_stop):
             d.close()
 
         ### adjust newly created header file with new field names (overwrites old header file)
-        with open(os.path.join(pathF, 'Header.csv'), 'w+', newline='') as c:
+        with open(os.path.join(AppContext.pathF, 'Header.csv'), 'w+', newline='') as c:
             writer3 = csv.writer(c)
             for row in header_list:
                 writer3.writerow([row])
             if start_stop == 'manage':
                 if H2OcsvFound == True and O2csvFound == False:
-                    try:
-                        newStartTime
-                    except:
-                        newStartTime = oldStartTimeRH2O
-                    writer3.writerow([newStartTime])
-                    try:
-                        newStopTime
-                    except:
-                        newStopTime = oldStopTimeRH2O
-                    writer3.writerow([newStopTime])
+
+                    AppContext.newStartTime = AppContext.oldStartTimeRH2
+                    writer3.writerow([AppContext.newStartTime])
+                    AppContext.newStopTime = AppContext.oldStopTimeRH2O
+                    writer3.writerow([AppContext.newStopTime])
                 elif H2OcsvFound == False and O2csvFound == True:
                     try:
-                        newStartTimeO2
+                        AppContext.newStartTimeO2
                     except:
-                        newStartTimeO2 = oldStartTimeRO2
-                    writer3.writerow([newStartTimeO2])
+                        AppContext.newStartTimeO2 = AppContext.oldStartTimeRO2
+                    writer3.writerow([AppContext.newStartTimeO2])
                     try:
-                        newStopTimeO2
+                        AppContext.newStopTimeO2
                     except:
-                        newStopTimeO2 = oldStopTimeRO2
-                    writer3.writerow([newStopTimeO2])
+                        AppContext.newStopTimeO2 = AppContext.oldStopTimeRO2
+                    writer3.writerow([AppContext.newStopTimeO2])
                 elif H2OcsvFound == True and H2OcsvFound == True:
-                    try:
-                        newStartTime
-                    except:
-                        newStartTime = min(oldStartTimeRO2, oldStartTimeRH2O)
+
+                    AppContext.newStartTime = min(AppContext.oldStartTimeRO2, AppContext.oldStartTimeRH2)
                     writer3.writerow([newStartTime])
                     try:
-                        newStopTime
+                        AppContext.newStopTime
                     except:
-                        newStopTime = min(oldStopTimeRO2, oldStopTimeRH2O)
-                    writer3.writerow([newStopTime])
+                        AppContext.newStopTime = min(AppContext.oldStopTimeRO2, AppContext.oldStopTimeRH2O)
+                    writer3.writerow([AppContext.newStopTime])
 
                 if H2OcsvFound == True and O2csvFound == True:
                     try:
-                        o2bAvgEdit
+                        AppContext.o2bAvgEdit
                     except:
-                        o2bAvgEdit = o2bAvgUnedit
-                    writer3.writerow([o2bAvgEdit])
+                        AppContext.o2bAvgEdit = AppContext.o2bAvgUnedit
+                    writer3.writerow([AppContext.o2bAvgEdit])
                     try:
-                        o2bMaxEdit
+                        AppContext.o2bMaxEdit
                     except:
-                        o2bMaxEdit = o2bMaxUnedit
-                    writer3.writerow([o2bMaxEdit])
+                        AppContext.o2bMaxEdit = AppContext.o2bMaxUnedit
+                    writer3.writerow([AppContext.o2bMaxEdit])
                     try:
-                        o2bFinalEdit
+                        AppContext.o2bFinalEdit
                     except:
-                        o2bFinalEdit = o2bFinalUnedit
-                    writer3.writerow([o2bFinalEdit])
+                        AppContext.o2bFinalEdit = AppContext.o2bFinalUnedit
+                    writer3.writerow([AppContext.o2bFinalEdit])
                     try:
-                        h2obAvgEdit
+                        AppContext.h2obAvgEdit
                     except:
-                        h2obAvgEdit = h2obAvgUnedit
-                    writer3.writerow([h2obAvgEdit])
+                        AppContext.h2obAvgEdit = AppContext.h2obAvgUnedit
+                    writer3.writerow([AppContext.h2obAvgEdit])
                     try:
                         h2obMaxEdit
                     except:
-                        h2obMaxEdit = h2obMaxUnedit
+                        h2obMaxEdit = AppContext.h2obMaxUnedit
                     writer3.writerow([h2obMaxEdit])
                     try:
-                        h2obFinalEdit
+                        AppContext.h2obFinalEdit
                     except:
-                        h2obFinalEdit = h2obFinalUnedit
-                    writer3.writerow([h2obFinalEdit])
+                        AppContext.h2obFinalEdit = AppContext.h2obFinalUnedit
+                    writer3.writerow([AppContext.h2obFinalEdit])
                 elif H2OcsvFound == True and O2csvFound == False:
                     try:
-                        h2obAvgEdit
+                        AppContext.h2obAvgEdit
                     except:
-                        h2obAvgEdit = h2obAvgUnedit
-                    writer3.writerow([h2obAvgEdit])
+                        AppContext.h2obAvgEdit = AppContext.h2obAvgUnedit
+                    writer3.writerow([AppContext.h2obAvgEdit])
                     try:
                         h2obMaxEdit
                     except:
-                        h2obMaxEdit = h2obMaxUnedit
+                        h2obMaxEdit = AppContext.h2obMaxUnedit
                     writer3.writerow([h2obMaxEdit])
                     try:
-                        h2obFinalEdit
+                        AppContext.h2obFinalEdit
                     except:
-                        h2obFinalEdit = h2obFinalUnedit
-                    writer3.writerow([h2obFinalEdit])
+                        AppContext.h2obFinalEdit = AppContext.h2obFinalUnedit
+                    writer3.writerow([AppContext.h2obFinalEdit])
                 elif H2OcsvFound == False and O2csvFound == True:
                     try:
-                        o2bAvgEdit
+                        AppContext.o2bAvgEdit
                     except:
-                        o2bAvgEdit = o2bAvgUnedit
-                    writer3.writerow([o2bAvgEdit])
+                        AppContext.o2bAvgEdit = AppContext.o2bAvgUnedit
+                    writer3.writerow([AppContext.o2bAvgEdit])
                     try:
-                        o2bMaxEdit
+                        AppContext.o2bMaxEdit
                     except:
-                        o2bMaxEdit = o2bMaxUnedit
-                    writer3.writerow([o2bMaxEdit])
+                        AppContext.o2bMaxEdit = AppContext.o2bMaxUnedit
+                    writer3.writerow([AppContext.o2bMaxEdit])
                     try:
-                        o2bFinalEdit
+                        AppContext.o2bFinalEdit
                     except:
-                        o2bFinalEdit = o2bFinalUnedit
-                    writer3.writerow([o2bFinalEdit])
+                        AppContext.o2bFinalEdit = AppContext.o2bFinalUnedit
+                    writer3.writerow([AppContext.o2bFinalEdit])
 
             if start_stop == 'stop':
                 writer3.writerow([start_time])
@@ -2362,11 +2171,8 @@ def confirm_fields(start_stop):
     global time_elapsed
     global O2csvFound, H2OcsvFound, BothcsvFound
     global time_elapsedO2
-    global oldStopTimeRO2
-    global oldStartTimeRO2
     global time_elapsedO2
-    global oldStopTimeRH2O
-    global oldStartTimeRH2O
+
     if start_stop == 'stop':
         yfield += 180  # adjusted 10/16/20
         paddy -= 10  # for new test parameters layout
@@ -2378,32 +2184,32 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                h2obAvgEdit
+                AppContext.h2obAvgEdit
             except NameError:
-                h2obAvgEdit_exists = False
+                AppContext.h2obAvgEdit_exists = False
             else:
-                h2obAvgEdit_exists = True
+                AppContext.h2obAvgEdit_exists = True
 
-            if h2obAvgEdit_exists == False and start_stop == 'manage':
+            if AppContext.h2obAvgEdit_exists == False and start_stop == 'manage':
                 try:
                     header_list[21]
                 except:
-                    h2oMeanValueVar = StringVar(value=h2obAvgUnedit)
+                    h2oMeanValueVar = StringVar(value=AppContext.h2obAvgUnedit)
                 else:
                     h2oMeanValueVar = StringVar(value=header_list[21])
                 label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if h2obAvgEdit_exists == False and start_stop == 'stop':
+            if AppContext.h2obAvgEdit_exists == False and start_stop == 'stop':
                 h2oMeanValueVar = StringVar(value=h2oMeanValue)
                 label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if h2obAvgEdit_exists == True:
-                h2obAvgEditVar = StringVar(value=h2obAvgEdit)
-                label14 = tk.Label(top4, textvariable=h2obAvgEditVar, width=17, bg="grey35", fg="white",
+            if AppContext.h2obAvgEdit_exists == True:
+                AppContext.h2obAvgEditVar = StringVar(value=AppContext.h2obAvgEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.h2obAvgEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
@@ -2414,31 +2220,31 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                h2obFinalEdit
+                AppContext.h2obFinalEdit
             except NameError:
-                h2obFinalEdit_exists = False
+                AppContext.h2obFinalEdit_exists = False
             else:
-                h2obFinalEdit_exists = True
-            if h2obFinalEdit_exists == False and start_stop == 'manage':
+                AppContext.h2obFinalEdit_exists = True
+            if AppContext.h2obFinalEdit_exists == False and start_stop == 'manage':
                 try:
                     header_list[23]
                 except:
-                    h2oFinalValueVar = StringVar(value=h2obFinalUnedit)
+                    h2oFinalValueVar = StringVar(value=AppContext.h2obFinalUnedit)
                 else:
                     h2oFinalValueVar = StringVar(value=header_list[23])
                 label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
-            if h2obFinalEdit_exists == False and start_stop == 'stop':
+            if AppContext.h2obFinalEdit_exists == False and start_stop == 'stop':
                 h2oFinalValueVar = StringVar(value=h2oFinalValue)
                 label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
-            if h2obFinalEdit_exists == True:
-                h2obFinalEditVar = StringVar(value=h2obFinalEdit)
-                label14 = tk.Label(top4, textvariable=h2obFinalEditVar, width=17, bg="grey35", fg="white",
+            if AppContext.h2obFinalEdit_exists == True:
+                AppContext.h2obFinalEditVar = StringVar(value=AppContext.h2obFinalEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.h2obFinalEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
@@ -2451,31 +2257,31 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                o2bAvgEdit
+                AppContext.o2bAvgEdit
             except NameError:
-                o2bAvgEdit_exists = False
+                AppContext.o2bAvgEdit_exists = False
             else:
-                o2bAvgEdit_exists = True
+                AppContext.o2bAvgEdit_exists = True
 
-            if o2bAvgEdit_exists == False and start_stop == 'manage':
+            if AppContext.o2bAvgEdit_exists == False and start_stop == 'manage':
                 try:
                     header_list[18]
                 except:
-                    o2bAvgEditVar = StringVar(value=o2bAvgUnedit)
+                    AppContext.o2bAvgEditVar = StringVar(value=AppContext.o2bAvgUnedit)
                 else:
-                    o2bAvgEditVar = StringVar(value=header_list[18])
-                label14 = tk.Label(top4, textvariable=o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
+                    AppContext.o2bAvgEditVar = StringVar(value=header_list[18])
+                label14 = tk.Label(top4, textvariable=AppContext.o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if o2bAvgEdit_exists == False and start_stop == 'stop':
+            if AppContext.o2bAvgEdit_exists == False and start_stop == 'stop':
                 global o2MeanValueVar
                 label14 = tk.Label(top4, textvariable=o2MeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if o2bAvgEdit_exists == True:
-                o2bAvgEditVar = StringVar(value=o2bAvgEdit)
-                label14 = tk.Label(top4, textvariable=o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
+            if AppContext.o2bAvgEdit_exists == True:
+                AppContext.o2bAvgEditVar = StringVar(value=AppContext.o2bAvgEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
 
@@ -2485,32 +2291,32 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                o2bFinalEdit
+                AppContext.o2bFinalEdit
             except NameError:
-                o2bFinalEdit_exists = False
+                AppContext.o2bFinalEdit_exists = False
             else:
-                o2bFinalEdit_exists = True
+                AppContext.o2bFinalEdit_exists = True
 
-            if o2bFinalEdit_exists == False and start_stop == 'manage':
+            if AppContext.o2bFinalEdit_exists == False and start_stop == 'manage':
                 try:
                     header_list[20]
                 except:
-                    o2bFinalEditVar = StringVar(value=o2bFinalUnedit)
+                    AppContext.o2bFinalEditVar = StringVar(value=AppContext.o2bFinalUnedit)
                 else:
-                    o2bFinalEditVar = StringVar(value=header_list[20])
-                label14 = tk.Label(top4, textvariable=o2bFinalEditVar, width=17, bg="grey35", fg="white",
+                    AppContext.o2bFinalEditVar = StringVar(value=header_list[20])
+                label14 = tk.Label(top4, textvariable=AppContext.o2bFinalEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
-            if o2bFinalEdit_exists == False and start_stop == 'stop':
+            if AppContext.o2bFinalEdit_exists == False and start_stop == 'stop':
                 global o2FinalValueVar
                 label14 = tk.Label(top4, textvariable=o2FinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
-            if o2bFinalEdit_exists == True:
-                o2bFinalEditVar = StringVar(value=o2bFinalEdit)
-                label14 = tk.Label(top4, textvariable=o2bFinalEditVar, width=17, bg="grey35", fg="white",
+            if AppContext.o2bFinalEdit_exists == True:
+                AppContext.o2bFinalEditVar = StringVar(value=AppContext.o2bFinalEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.o2bFinalEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
@@ -2530,15 +2336,14 @@ def confirm_fields(start_stop):
             ### Test Duration - O2
             global time_elapsedO2
             if start_stop == 'manage':
-                try:
-                    O2xbReset[-1]
-                except:
-                    global oldStopTimeRO2
-                    global oldStartTimeRO2
-                    time_elapseMinO2 = oldStopTimeRO2.minute - oldStartTimeRO2.minute
-                    time_elapseHourO2 = oldStopTimeRO2.hour - oldStartTimeRO2.hour
-                else:
-                    time_elapseMinO2 = O2xbReset[-1] - O2xbReset[0]
+                # try:
+                #     AppContext.O2xbReset[-1]
+                # except:
+                #     global AppContext.oldStopTimeRO2
+                #     global AppContext.oldStartTimeRO2
+                #     time_elapseMinO2 = AppContext.oldStopTimeRO2.minute - AppContext.oldStartTimeRO2.minute
+                #     time_elapseHourO2 = AppContext.oldStopTimeRO2.hour - AppContext.oldStartTimeRO2.hour
+                time_elapseMinO2 = AppContext.O2xbReset[-1] - AppContext.O2xbReset[0]
                 if time_elapseMinO2 > 60:
                     time_elapseHourO2, time_elapseMinO2 = divmod(time_elapseMinO2, 60)
                     global time_elapsedO2
@@ -2575,10 +2380,8 @@ def confirm_fields(start_stop):
                 try:
                     H2OxbReset[-1]
                 except:
-                    global oldStopTimeRH2O
-                    global oldStartTimeRH2O
-                    time_elapseMin = oldStopTimeRH2O.minute - oldStartTimeRH2O.minute
-                    time_elapseHour = oldStopTimeRH2O.hour - oldStartTimeRH2O.hour
+                    time_elapseMin = AppContext.oldStopTimeRH2O.minute - AppContext.oldStartTimeRH2.minute
+                    time_elapseHour = AppContext.oldStopTimeRH2O.hour - AppContext.oldStartTimeRH2.hour
                 else:
                     time_elapseMin = H2OxbReset[-1] - H2OxbReset[0]
                 if time_elapseMin > 60:
@@ -2599,11 +2402,11 @@ def confirm_fields(start_stop):
                 time_elapsedvar = StringVar(value=time_elapsed)
             if start_stop == 'manage':
                 try:
-                    newTime_durationH2O
+                    AppContext.newTime_durationH2O
                 except:
                     time_elapsedvar = StringVar(value=time_elapsed)
                 else:
-                    time_elapsedvar = StringVar(value=newTime_durationH2O)
+                    time_elapsedvar = StringVar(value=AppContext.newTime_durationH2O)
             label14 = tk.Label(top4, textvariable=time_elapsedvar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
             label14.place(x=xfield + paddx, y=175 + paddy * i + yfield)
             i = i + 1
@@ -2618,20 +2421,20 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                h2obAvgEdit
+                AppContext.h2obAvgEdit
             except NameError:
-                h2obAvgEdit_exists = False
+                AppContext.h2obAvgEdit_exists = False
             else:
-                h2obAvgEdit_exists = True
+                AppContext.h2obAvgEdit_exists = True
 
-            if h2obAvgEdit_exists == False and start_stop == 'manage':
+            if AppContext.h2obAvgEdit_exists == False and start_stop == 'manage':
                 try:
                     if O2csvFound == True:
                         header_list[23]
                     if O2csvFound == False:
                         header_list[20]
                 except:
-                    h2oMeanValueVar = StringVar(value=h2obAvgUnedit)
+                    h2oMeanValueVar = StringVar(value=AppContext.h2obAvgUnedit)
                 else:
                     if O2csvFound == True:
                         h2oMeanValueVar = StringVar(value=header_list[23])
@@ -2641,15 +2444,15 @@ def confirm_fields(start_stop):
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if h2obAvgEdit_exists == False and start_stop == 'stop':
+            if AppContext.h2obAvgEdit_exists == False and start_stop == 'stop':
                 h2oMeanValueVar = StringVar(value=h2oMeanValue)
                 label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if h2obAvgEdit_exists == True:
-                h2obAvgEditVar = StringVar(value=h2obAvgEdit)
-                label14 = tk.Label(top4, textvariable=h2obAvgEditVar, width=17, bg="grey35", fg="white",
+            if AppContext.h2obAvgEdit_exists == True:
+                AppContext.h2obAvgEditVar = StringVar(value=AppContext.h2obAvgEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.h2obAvgEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
@@ -2660,19 +2463,19 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                h2obFinalEdit
+                AppContext.h2obFinalEdit
             except NameError:
-                h2obFinalEdit_exists = False
+                AppContext.h2obFinalEdit_exists = False
             else:
-                h2obFinalEdit_exists = True
-            if h2obFinalEdit_exists == False and start_stop == 'manage':
+                AppContext.h2obFinalEdit_exists = True
+            if AppContext.h2obFinalEdit_exists == False and start_stop == 'manage':
                 try:
                     if O2csvFound == True:
                         header_list[25]
                     if O2csvFound == False:
                         header_list[22]
                 except:
-                    h2oFinalValueVar = StringVar(value=h2obFinalUnedit)
+                    h2oFinalValueVar = StringVar(value=AppContext.h2obFinalUnedit)
                 else:
                     if O2csvFound == True:
                         h2oFinalValueVar = StringVar(value=header_list[25])
@@ -2682,15 +2485,15 @@ def confirm_fields(start_stop):
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
-            if h2obFinalEdit_exists == False and start_stop == 'stop':
+            if AppContext.h2obFinalEdit_exists == False and start_stop == 'stop':
                 h2oFinalValueVar = StringVar(value=h2oFinalValue)
                 label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
-            if h2obFinalEdit_exists == True:
-                h2obFinalEditVar = StringVar(value=h2obFinalEdit)
-                label14 = tk.Label(top4, textvariable=h2obFinalEditVar, width=17, bg="grey35", fg="white",
+            if AppContext.h2obFinalEdit_exists == True:
+                AppContext.h2obFinalEditVar = StringVar(value=AppContext.h2obFinalEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.h2obFinalEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
@@ -2704,13 +2507,13 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                o2bAvgEdit
+                AppContext.o2bAvgEdit
             except NameError:
-                o2bAvgEdit_exists = False
+                AppContext.o2bAvgEdit_exists = False
             else:
-                o2bAvgEdit_exists = True
+                AppContext.o2bAvgEdit_exists = True
 
-            if o2bAvgEdit_exists == False and start_stop == 'manage':
+            if AppContext.o2bAvgEdit_exists == False and start_stop == 'manage':
 
                 try:
                     if H2OcsvFound == True:
@@ -2718,23 +2521,23 @@ def confirm_fields(start_stop):
                     elif H2OcsvFound == False:
                         header_list[20]
                 except:
-                    o2bAvgEditVar = StringVar(value=o2bAvgUnedit)
+                    AppContext.o2bAvgEditVar = StringVar(value=AppContext.o2bAvgUnedit)
                 else:
                     if H2OcsvFound == True:
-                        o2bAvgEditVar = StringVar(value=header_list[20])
+                        AppContext.o2bAvgEditVar = StringVar(value=header_list[20])
                     elif H2OcsvFound == False:
-                        o2bAvgEditVar = StringVar(value=header_list[20])
-                label14 = tk.Label(top4, textvariable=o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
+                        AppContext.o2bAvgEditVar = StringVar(value=header_list[20])
+                label14 = tk.Label(top4, textvariable=AppContext.o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if o2bAvgEdit_exists == False and start_stop == 'stop':
+            if AppContext.o2bAvgEdit_exists == False and start_stop == 'stop':
                 label14 = tk.Label(top4, textvariable=o2MeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
-            if o2bAvgEdit_exists == True:
-                o2bAvgEditVar = StringVar(value=o2bAvgEdit)
-                label14 = tk.Label(top4, textvariable=o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
+            if AppContext.o2bAvgEdit_exists == True:
+                AppContext.o2bAvgEditVar = StringVar(value=AppContext.o2bAvgEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.o2bAvgEditVar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
 
@@ -2744,37 +2547,37 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             try:
-                o2bFinalEdit
+                AppContext.o2bFinalEdit
             except NameError:
-                o2bFinalEdit_exists = False
+                AppContext.o2bFinalEdit_exists = False
             else:
-                o2bFinalEdit_exists = True
+                AppContext.o2bFinalEdit_exists = True
 
-            if o2bFinalEdit_exists == False and start_stop == 'manage':
+            if AppContext.o2bFinalEdit_exists == False and start_stop == 'manage':
                 try:
                     if H2OcsvFound == True:
                         header_list[22]
                     if H2OcsvFound == False:
                         header_list[22]
                 except:
-                    o2bFinalEditVar = StringVar(value=o2bFinalUnedit)
+                    AppContext.o2bFinalEditVar = StringVar(value=AppContext.o2bFinalUnedit)
                 else:
                     if H2OcsvFound == True:
-                        o2bFinalEditVar = StringVar(value=header_list[22])
+                        AppContext.o2bFinalEditVar = StringVar(value=header_list[22])
                     if H2OcsvFound == False:
-                        o2bFinalEditVar = StringVar(value=header_list[22])
-                label14 = tk.Label(top4, textvariable=o2bFinalEditVar, width=17, bg="grey35", fg="white",
+                        AppContext.o2bFinalEditVar = StringVar(value=header_list[22])
+                label14 = tk.Label(top4, textvariable=AppContext.o2bFinalEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
-            if o2bFinalEdit_exists == False and start_stop == 'stop':
+            if AppContext.o2bFinalEdit_exists == False and start_stop == 'stop':
                 label14 = tk.Label(top4, textvariable=o2FinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
-            if o2bFinalEdit_exists == True:
-                o2bFinalEditVar = StringVar(value=o2bFinalEdit)
-                label14 = tk.Label(top4, textvariable=o2bFinalEditVar, width=17, bg="grey35", fg="white",
+            if AppContext.o2bFinalEdit_exists == True:
+                AppContext.o2bFinalEditVar = StringVar(value=AppContext.o2bFinalEdit)
+                label14 = tk.Label(top4, textvariable=AppContext.o2bFinalEditVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
@@ -2790,15 +2593,15 @@ def confirm_fields(start_stop):
 
             if start_stop == 'manage':
                 try:
-                    O2xbReset[-1]
+                    AppContext.O2xbReset[-1]
                 except:
-                    time_elapseO2 = oldStopTimeRO2 - oldStartTimeRO2
+                    time_elapseO2 = AppContext.oldStopTimeRO2 - AppContext.oldStartTimeRO2
                     time_elapseSecO2 = time_elapseO2.total_seconds()
                     time_elapseMinO2, time_elapseSecO2 = divmod(time_elapseSecO2, 60)
                     time_elapseHourO2, time_elapseMinO2 = divmod(time_elapseMinO2, 60)
                     time_elapseDayO2, time_elapseHourO2 = divmod(time_elapseHourO2, 24)
                 else:
-                    time_elapseMinO2 = O2xbReset[-1] - O2xbReset[0]
+                    time_elapseMinO2 = AppContext.O2xbReset[-1] - AppContext.O2xbReset[0]
                     time_elapseHourO2, time_elapseMinO2 = divmod(time_elapseMinO2, 60)
                     time_elapseDayO2, time_elapseHourO2 = divmod(time_elapseHourO2, 24)
                     print("day=" + str(time_elapseDayO2) + " hour=" + str(time_elapseHourO2) + " minute=" + str(
@@ -2839,7 +2642,7 @@ def confirm_fields(start_stop):
                 H2OxbReset[-1]
 
             except:
-                time_elapseH2O = oldStopTimeRH2O - oldStartTimeRH2O
+                time_elapseH2O = AppContext.oldStopTimeRH2O - AppContext.oldStartTimeRH2
                 time_elapseSecH2O = time_elapseH2O.total_seconds()
                 time_elapseMinH2O, time_elapseSecH2O = divmod(time_elapseSecH2O, 60)
                 time_elapseHourH2O, time_elapseMinH2O = divmod(time_elapseMinH2O, 60)
@@ -2852,16 +2655,15 @@ def confirm_fields(start_stop):
                 time_elapseDayH2O, time_elapseHourH2O = divmod(time_elapseHourH2O, 24)
                 print("day=" + str(time_elapseDayH2O) + " hour=" + str(time_elapseHourH2O) + " minute=" + str(
                     time_elapseMinH2O))
-            global time_elapsedH2O
             if int(time_elapseDayH2O) > 0:
-                time_elapsedH2O = str(int(time_elapseDayH2O)) + " days " + str(int(time_elapseHourH2O)) + " hours "
-                print("H2O time is " + str(time_elapsedH2O))
+                AppContext.time_elapsedH2O = str(int(time_elapseDayH2O)) + " days " + str(int(time_elapseHourH2O)) + " hours "
+                print("H2O time is " + str(AppContext.time_elapsedH2O))
             elif int(time_elapseDayH2O) < 1 and int(time_elapseHourH2O) > 0:
-                time_elapsedH2O = str(int(time_elapseHourH2O)) + " hours " + str(int(time_elapseMinH2O)) + " minutes"
-                print("H2O time is " + str(time_elapsedH2O))
+                AppContext.time_elapsedH2O = str(int(time_elapseHourH2O)) + " hours " + str(int(time_elapseMinH2O)) + " minutes"
+                print("H2O time is " + str(AppContext.time_elapsedH2O))
             elif int(time_elapseDayH2O) < 1 and int(time_elapseHourH2O) < 1:
-                time_elapsedH2O = str(int(time_elapseMinH2O)) + " minutes"
-                print("H2O time is " + str(time_elapsedH2O))
+                AppContext.time_elapsedH2O = str(int(time_elapseMinH2O)) + " minutes"
+                print("H2O time is " + str(AppContext.time_elapsedH2O))
 
             xfield = 770
             # i+=2.05
@@ -2870,14 +2672,14 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             if start_stop == 'start' or start_stop == 'stop':
-                time_elapsedvar = StringVar(value=time_elapsedH2O)
+                time_elapsedvar = StringVar(value=AppContext.time_elapsedH2O)
             if start_stop == 'manage':
                 try:
-                    newTime_durationH2O
+                    AppContext.newTime_durationH2O
                 except:
-                    time_elapsedvar = StringVar(value=time_elapsedH2O)
+                    time_elapsedvar = StringVar(value=AppContext.time_elapsedH2O)
                 else:
-                    time_elapsedvar = StringVar(value=newTime_durationH2O)
+                    time_elapsedvar = StringVar(value=AppContext.newTime_durationH2O)
             label14 = tk.Label(top4, textvariable=time_elapsedvar, bg="grey35", fg="white", font=SMALL_FONT, width=17)
             label14.place(x=xfield + paddx, y=175 + paddy * i + yfield)
             i = i + 1
@@ -2954,12 +2756,11 @@ def animateh2o(i):
 
         # h2o = 0 if h2o < 0 else h2o
         if SerialInterface.meecoConnected:
-            testingStatusMessageMeeco.set("Demo Mode" if SerialInterface.demoMode else "")
+            AppContext.testingStatusMessageMeeco.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('h2o is fucked')
-            testingStatusMessageMeeco.set("Check Tracer 2 Connection")
+            AppContext.testingStatusMessageMeeco.set("Check Tracer 2 Connection")
             h2o = 0
-
 
         if not manageGraphData.update_h2o_values(h2o):
             return
@@ -2999,7 +2800,7 @@ def animateh2o(i):
         cycleH2O = (cycleH2O + 1) % 15
         if cycleH2O == 0:
             ## create a datetime stamp
-            h2otime = datetime.now() - start_time
+            h2otime = datetime.now() - AppContext.start_time
             manageGraphData.update_h2o_dataList(h2o, h2otime)
 
             #### meecoDrift is how much the interval is drifting from 1 minute ######
@@ -3073,7 +2874,7 @@ def animateh2o(i):
         if recording == True and var2.get() != 'radO2':
             global h2oValuelist
             h2oValuelist = []
-            with open(os.path.join(pathF, h2ofileTitle) + '.csv', 'w+', newline='') as h:
+            with open(os.path.join(AppContext.pathF, h2ofileTitle) + '.csv', 'w+', newline='') as h:
                 writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
                 for eachLine in manageGraphData.h2odataList:
                     writer2.writerow([eachLine])
@@ -3129,10 +2930,10 @@ def animateo2(i):  #### animation function. despite the name it actually animate
 
         # o2 = 0 if o2 < 0 else o2
         if SerialInterface.deltafConnected:
-            testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
+            AppContext.testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('o2 is fucked')
-            testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            AppContext.testingStatusMessageDeltaf.set("Check DeltaF Connection")
             o2 = 0
 
 
@@ -3142,7 +2943,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
 
         cycleO2 = (cycleO2 + 1) % 15
         if cycleO2 == 0:
-            o2time = datetime.now() - start_time
+            o2time = datetime.now() - AppContext.start_time
             manageGraphData.update_o2_dataList(o2, o2time)
             deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
             ############################
@@ -3196,7 +2997,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             if recording == True and var2.get() != 'radH2O':
                 global o2Valuelist
                 o2Valuelist = []
-                with open(os.path.join(pathF, o2fileTitle) + '.csv', 'w+', newline='') as o:
+                with open(os.path.join(AppContext.pathF, o2fileTitle) + '.csv', 'w+', newline='') as o:
                     writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
                     for eachLine in manageGraphData.o2dataList:
                         writer1.writerow([eachLine])
@@ -3241,7 +3042,7 @@ def stop_recording():
     stop_timeet = stop_time.strftime("%m_%d_%y_%H.%M.%S")
 
     global time_elapsed
-    time_elapsed = stop_time - start_time
+    time_elapsed = stop_time - AppContext.start_time
     time_elapsed = time_elapsed_string(time_elapsed)
 
     with open(f'{root_path}/Header_default.csv', newline='') as t:
@@ -3250,12 +3051,11 @@ def stop_recording():
         header_list = []
         for row in headreader:
             header_list.append(row[0])
-    directory = dir_TGView
-    path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
+    AppContext.directory = dir_TGView
+    path = AppContext.directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
         header_list[0]) + "_" + stop_timeet
-    global pathF
     os.mkdir(path)
-    pathF = path
+    AppContext.pathF = path
     with open(os.path.join(path, 'Header') + '.csv', 'w+', newline='') as c:
         writer3 = csv.writer(c)
         writer3.writerow([header_list[0]])
@@ -3325,7 +3125,7 @@ def stop_recording():
     h2oFinalValueVar = StringVar(value=h2oFinalValue)
 
     global start_timea
-    start_timea = start_time.strftime("%H:%M  %m/%d/%y")
+    start_timea = AppContext.start_time.strftime("%H:%M  %m/%d/%y")
     stop_timee = stop_time.strftime("%H:%M  %m/%d/%y")
 
     confirm_fields(start_stop="stop")
@@ -3336,7 +3136,7 @@ def exportH2O(startscreen):
 
         tracerflow_units = 'scfh'
         deltaflow_units = 'scfh'
-        # O2xbReset = o2xList
+        # AppContext.O2xbReset = o2xList
         # O2yb = o2yList
         # H2OxbReset = h2oxList
         # H2Oyb = h2oyList
@@ -3352,12 +3152,12 @@ def exportH2O(startscreen):
             H2OxbReset
         except:
             H2OxbReset = xx1
-        h2obAvgEdit = str(round(mean(H2Oyb), 1))
+        AppContext.h2obAvgEdit = str(round(mean(H2Oyb), 1))
         h2obMaxEdit = str(round(max(H2Oyb), 1))
-        h2obFinalEdit = str(round(H2Oyb[-1], 1))
+        AppContext.h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
         # H2OxbReset = xx1
-        # O2xbReset = xx2
+        # AppContext.O2xbReset = xx2
 
         with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
@@ -3369,9 +3169,9 @@ def exportH2O(startscreen):
         H2OxbReset = manageGraphData.h2oxList
         H2Oyb = manageGraphData.h2oyList
 
-        h2obAvgEdit = str(round(mean(H2Oyb), 1))
+        AppContext.h2obAvgEdit = str(round(mean(H2Oyb), 1))
         h2obMaxEdit = str(round(max(H2Oyb), 1))
-        h2obFinalEdit = str(round(H2Oyb[-1], 1))
+        AppContext.h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
         with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
@@ -3460,18 +3260,10 @@ def exportH2O(startscreen):
 
     pdf.cell(rightColumnSpacing, 7, 'Start Time / Date:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStartTime
-        try:
-            newStartTime
-            print(newStartTime)
-        except:
-            newStartTime = oldStartTimeRH2O
-
-        else:
-            pass
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStartTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        AppContext.newStartTime = AppContext.oldStartTimeRH2
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStartTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
 
     pdf.cell(leftColumnSpacing, 7, 'Test Point ID:', align='R', ln=0)
@@ -3481,15 +3273,7 @@ def exportH2O(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(stop_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStopTime
-        try:
-            newStopTime
-
-        except:
-            newStopTime = oldStopTimeRH2O
-        else:
-            pass
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStopTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStopTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
 
     pdf.cell(leftColumnSpacing, 7, 'Test Gas:', align='R', ln=0)
@@ -3498,22 +3282,18 @@ def exportH2O(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
-        try:
-            newTime_durationH2O
-        except:
-            global time_elapsedH2O
-            newTime_durationH2O = time_elapsedH2O
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newTime_durationH2O), border=1, ln=1)
+        AppContext.newTime_durationH2O = AppContext.time_elapsedH2O
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newTime_durationH2O), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Flow (SCFH):', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[8]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Average (PPB):', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth, fieldBoxHeight, h2obAvgEdit, border=1, ln=1)
+    pdf.cell(rightFieldBoxWidth, fieldBoxHeight, AppContext.h2obAvgEdit, border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Technician:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[7]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Final (PPB):', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth, fieldBoxHeight, h2obFinalEdit, border=1, ln=1)
+    pdf.cell(rightFieldBoxWidth, fieldBoxHeight, AppContext.h2obFinalEdit, border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(135, 7, 'Specification (PPB):', align='R', ln=0)
     pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(header_list[17]), border=1, ln=1)
@@ -3533,13 +3313,13 @@ def exportH2O(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
             header_list[0]) + "_" + stop_timeet + ".pdf"
-        global pathF
+
     if startt_stopp == 'manage':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-            header_list[0]) + "_" + str(newStopTime.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
-        pathF = folder
+            header_list[0]) + "_" + str(AppContext.newStopTime.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
+        AppContext.pathF = folder
 
-    pdfpath = pathF + '/' + pdfname
+    pdfpath = AppContext.pathF + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
     os.chdir(dir_TGView)
@@ -3550,25 +3330,14 @@ def exportH2O(startscreen):
 def exportO2(startscreen):
     if startscreen == True:  ## creating pdf from startscreen
 
-        global O2yb
-        global O2xbReset
         global xx2, yy2
 
-        try:
-            O2yb
-        except:
-            O2yb = yy2
-        try:
-            O2xbReset
-        except:
-            O2xbReset = xx2
-
-        o2bAvgEdit = str(round(mean(O2yb), 1))
-        o2bMaxEdit = str(round(max(O2yb), 1))
-        o2bFinalEdit = str(round(O2yb[-1], 1))
+        AppContext.o2bAvgEdit = str(round(mean(AppContext.O2yb), 1))
+        AppContext.o2bMaxEdit = str(round(max(AppContext.O2yb), 1))
+        AppContext.o2bFinalEdit = str(round(AppContext.O2yb[-1], 1))
 
         # H2OxbReset = xx1
-        # O2xbReset = xx2
+        # AppContext.O2xbReset = xx2
 
         with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
@@ -3577,12 +3346,12 @@ def exportO2(startscreen):
                 headerdata.append(row[0])
     if startscreen == False:  ## creating pdf from startscreen
 
-        O2xbReset = manageGraphData.o2xList
-        O2yb = manageGraphData.o2yList
+        AppContext.O2xbReset = manageGraphData.o2xList
+        AppContext.O2yb = manageGraphData.o2yList
 
-        o2bAvgEdit = str(round(mean(O2yb), 1))
-        o2bMaxEdit = str(round(max(O2yb), 1))
-        o2bFinalEdit = str(round(O2yb[-1], 1))
+        AppContext.o2bAvgEdit = str(round(mean(AppContext.O2yb), 1))
+        AppContext.o2bMaxEdit = str(round(max(AppContext.O2yb), 1))
+        AppContext.o2bFinalEdit = str(round(AppContext.O2yb[-1], 1))
 
         with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
@@ -3594,19 +3363,19 @@ def exportO2(startscreen):
     # Export as O2 graph as PNG to attach to the PDF
     figO2 = plt.figure(figsize=(11.25, 6))
     plt.clf()
-    plt.plot(O2xbReset, O2yb, color='forestgreen', marker='o', linewidth=2)
+    plt.plot(AppContext.O2xbReset, AppContext.O2yb, color='forestgreen', marker='o', linewidth=2)
     plt.margins(0.01, 0.05)
     plt.title('Oxygen Test Report', fontproperties=font0, fontsize=28, pad=15)
     plt.xlabel('Time in Minutes', fontsize=14)
     plt.ylabel('PPB', fontsize=14)
     plt.grid(True)
     plt.ticklabel_format(useOffset=False)
-    o2xMax = max(O2xbReset)
+    o2xMax = max(AppContext.O2xbReset)
     plt.xlim(0, o2xMax)
-    if min(O2yb) < 0:
-        plt.ylim(min(O2yb) - 10, max(O2yb) + 10)
+    if min(AppContext.O2yb) < 0:
+        plt.ylim(min(AppContext.O2yb) - 10, max(AppContext.O2yb) + 10)
     else:
-        plt.ylim(0 - 1, max(O2yb) + 10)
+        plt.ylim(0 - 1, max(AppContext.O2yb) + 10)
     figO2.savefig("PDFpltO2.png", facecolor=figO2.get_facecolor(), edgecolor="none")
     # plt.close()
 
@@ -3664,18 +3433,9 @@ def exportO2(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[6]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Start Time / Date:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStartTimeO2
-        try:
-
-            newStartTimeO2
-
-        except:
-            newStartTimeO2 = oldStartTimeRO2
-        else:
-            pass
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStartTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStartTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Point ID:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[0]), border=1, ln=0)
@@ -3683,16 +3443,7 @@ def exportO2(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(stop_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStopTimeO2
-        try:
-            newStopTimeO2
-
-        except:
-            newStopTimeO2 = oldStopTimeRO2
-        else:
-            pass
-
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStopTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStopTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Gas:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
@@ -3712,13 +3463,13 @@ def exportO2(startscreen):
     pdf.cell(leftFieldBoxWidth / 2, fieldBoxHeight, str(header_list[8]), border=1, ln=0)
     pdf.cell(leftColumnSpacing / 2.5, 7, 'SCFH', align='R', ln=0)
     pdf.cell(rightColumnSpacing + 13, 7, 'Average:', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, o2bAvgEdit, border=1, ln=0)
+    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, AppContext.o2bAvgEdit, border=1, ln=0)
     pdf.cell(rightColumnSpacing / 3, 7, 'PPB', align='R', ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Technician:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[7]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Final:', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, o2bFinalEdit, border=1, ln=0)
+    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, AppContext.o2bFinalEdit, border=1, ln=0)
     pdf.cell(rightColumnSpacing / 3, 7, 'PPB', align='R', ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(134, 7, 'Specification:', align='R', ln=0)
@@ -3737,13 +3488,13 @@ def exportO2(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
             header_list[0]) + "_" + stop_timeet + ".pdf"
-        global pathF
+
     if startt_stopp == 'manage':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-            header_list[0]) + "_" + str(newStopTimeO2.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
-        pathF = folder
+            header_list[0]) + "_" + str(AppContext.newStopTimeO2.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
+        AppContext.pathF = folder
 
-    pdfpath = pathF + '/' + pdfname
+    pdfpath = AppContext.pathF + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
     os.chdir(dir_TGView)
@@ -3851,14 +3602,13 @@ def exportBoth(startscreen):
 
         tracerflow_units = 'scfh'
         deltaflow_units = 'scfh'
-        # O2xbReset = o2xList
-        # O2yb = o2yList
+        # AppContext.O2xbReset = o2xList
+        # AppContext.O2yb = o2yList
         # H2OxbReset = h2oxList
         # H2Oyb = h2oyList
         global H2Oyb
-        global O2yb
         global H2OxbReset
-        global O2xbReset
+
         global xx1, yy1
         global xx2, yy2
 
@@ -3866,28 +3616,22 @@ def exportBoth(startscreen):
             H2Oyb
         except:
             H2Oyb = yy1
-        try:
-            O2yb
-        except:
-            O2yb = yy2
+
         try:
             H2OxbReset
         except:
             H2OxbReset = xx1
-        try:
-            O2xbReset
-        except:
-            O2xbReset = xx2
-        h2obAvgEdit = str(round(mean(H2Oyb), 1))
-        h2obMaxEdit = str(round(max(H2Oyb), 1))
-        h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
-        o2bAvgEdit = str(round(mean(O2yb), 1))
-        o2bMaxEdit = str(round(max(O2yb), 1))
-        o2bFinalEdit = str(round(O2yb[-1], 1))
+        AppContext.h2obAvgEdit = str(round(mean(H2Oyb), 1))
+        h2obMaxEdit = str(round(max(H2Oyb), 1))
+        AppContext.h2obFinalEdit = str(round(H2Oyb[-1], 1))
+
+        AppContext.o2bAvgEdit = str(round(mean(AppContext.O2yb), 1))
+        AppContext.o2bMaxEdit = str(round(max(AppContext.O2yb), 1))
+        AppContext.o2bFinalEdit = str(round(AppContext.O2yb[-1], 1))
 
         # H2OxbReset = xx1
-        # O2xbReset = xx2
+        # AppContext.O2xbReset = xx2
 
         with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
@@ -3898,18 +3642,18 @@ def exportBoth(startscreen):
 
         tracerflow_units = 'scfh'
         deltaflow_units = 'scfh'
-        O2xbReset = manageGraphData.o2xList
-        O2yb = manageGraphData.o2yList
+        AppContext.O2xbReset = manageGraphData.o2xList
+        AppContext.O2yb = manageGraphData.o2yList
         H2OxbReset = manageGraphData.h2oxList
         H2Oyb = manageGraphData.h2oyList
 
-        h2obAvgEdit = str(round(mean(H2Oyb), 1))
+        AppContext.h2obAvgEdit = str(round(mean(H2Oyb), 1))
         h2obMaxEdit = str(round(max(H2Oyb), 1))
-        h2obFinalEdit = str(round(H2Oyb[-1], 1))
+        AppContext.h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
-        o2bAvgEdit = str(round(mean(O2yb), 1))
-        o2bMaxEdit = str(round(max(O2yb), 1))
-        o2bFinalEdit = str(round(O2yb[-1], 1))
+        AppContext.o2bAvgEdit = str(round(mean(AppContext.O2yb), 1))
+        AppContext.o2bMaxEdit = str(round(max(AppContext.O2yb), 1))
+        AppContext.o2bFinalEdit = str(round(AppContext.O2yb[-1], 1))
 
         with open(f'{root_path}/Header_default.csv', newline='') as t:
             headreader = csv.reader(t)
@@ -3921,20 +3665,20 @@ def exportBoth(startscreen):
     # Export as O2 graph as PNG to attach to the PDF
     figO2 = plt.figure(figsize=(11.25, 6))
     plt.clf()
-    plt.plot(O2xbReset, O2yb, color='forestgreen', marker='o', linewidth=2)
+    plt.plot(AppContext.O2xbReset, AppContext.O2yb, color='forestgreen', marker='o', linewidth=2)
     plt.margins(0.01, 0.05)
     plt.title('Oxygen Test Report', fontproperties=font0, fontsize=28, pad=15)
     plt.xlabel('Time in Minutes', fontsize=14)
     plt.ylabel('PPB', fontsize=14)
     plt.grid(True)
     plt.ticklabel_format(useOffset=False)
-    dataRangeo2 = max(O2yb) - min(O2yb)
-    o2xMax = max(O2xbReset)
+    dataRangeo2 = max(AppContext.O2yb) - min(AppContext.O2yb)
+    o2xMax = max(AppContext.O2xbReset)
     plt.xlim(0, o2xMax)
-    if min(O2yb) < 0:
-        plt.ylim(min(O2yb) - 10, max(O2yb) + 10)
+    if min(AppContext.O2yb) < 0:
+        plt.ylim(min(AppContext.O2yb) - 10, max(AppContext.O2yb) + 10)
     else:
-        plt.ylim(0 - 1, max(O2yb) + 10)
+        plt.ylim(0 - 1, max(AppContext.O2yb) + 10)
     figO2.savefig("PDFpltO2.png", facecolor=figO2.get_facecolor(), edgecolor="none")
     # plt.close()
 
@@ -4024,18 +3768,9 @@ def exportBoth(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[6]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Start Time/Date:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStartTimeO2
-        try:
-
-            newStartTimeO2
-
-        except:
-            newStartTimeO2 = oldStartTimeRO2
-        else:
-            pass
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStartTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStartTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Point ID:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[0]), border=1, ln=0)
@@ -4043,16 +3778,8 @@ def exportBoth(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(stop_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStopTimeO2
-        try:
-            newStopTimeO2
-
-        except:
-            newStopTimeO2 = oldStopTimeRO2
-        else:
-            pass
-
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStopTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        AppContext.newStopTimeO2 = AppContext.oldStopTimeRO2
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStopTimeO2.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Gas:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
@@ -4072,13 +3799,13 @@ def exportBoth(startscreen):
     pdf.cell(leftFieldBoxWidth / 2, fieldBoxHeight, str(header_list[8]), border=1, ln=0)
     pdf.cell(leftColumnSpacing / 2.5, 7, 'SCFH', align='R', ln=0)
     pdf.cell(rightColumnSpacing + 13, 7, 'Average:', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, o2bAvgEdit, border=1, ln=0)
+    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, AppContext.o2bAvgEdit, border=1, ln=0)
     pdf.cell(rightColumnSpacing / 3, 7, 'PPB', align='R', ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Technician:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[7]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Final:', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, o2bFinalEdit, border=1, ln=0)
+    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, AppContext.o2bFinalEdit, border=1, ln=0)
     pdf.cell(rightColumnSpacing / 3, 7, 'PPB', align='R', ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(134, 7, 'Specification:', align='R', ln=0)
@@ -4148,18 +3875,10 @@ def exportBoth(startscreen):
 
     pdf.cell(rightColumnSpacing, 7, 'Start Time/Date:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.start_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
-        global newStartTime
-        try:
-            newStartTime
-            print(newStartTime)
-        except:
-            newStartTime = oldStartTimeRH2O
-
-        else:
-            pass
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStartTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        AppContext.newStartTime = AppContext.oldStartTimeRH2
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStartTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
 
     pdf.cell(leftColumnSpacing, 7, 'Test Point ID:', align='R', ln=0)
@@ -4170,13 +3889,13 @@ def exportBoth(startscreen):
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(stop_time.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     if startt_stopp == 'manage':
         try:
-            newStopTime
-            print(newStopTime)
+            AppContext.newStopTime
+            print(AppContext.newStopTime)
         except:
-            newStopTime = oldStopTimeRH2O
+            AppContext.newStopTime = AppContext.oldStopTimeRH2O
         else:
             pass
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStopTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newStopTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
 
     pdf.cell(leftColumnSpacing, 7, 'Test Gas:', align='R', ln=0)
@@ -4185,25 +3904,20 @@ def exportBoth(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
-        try:
-            global newTime_durationH2O
-            newTime_durationH2O
-        except:
-            global time_elapsedH2O
-            newTime_durationH2O = time_elapsedH2O
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newTime_durationH2O), border=1, ln=1)
+        AppContext.newTime_durationH2O = AppContext.time_elapsedH2O
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newTime_durationH2O), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Flow:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth / 2, fieldBoxHeight, str(header_list[8]), border=1, ln=0)
     pdf.cell(leftColumnSpacing / 2.5, 7, 'SCFH', align='R', ln=0)
     pdf.cell(rightColumnSpacing + 13, 7, 'Average:', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, h2obAvgEdit, border=1, ln=0)
+    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, AppContext.h2obAvgEdit, border=1, ln=0)
     pdf.cell(rightColumnSpacing / 3, 7, 'PPB', align='R', ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Technician:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[7]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Final:', align='R', ln=0)
-    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, h2obFinalEdit, border=1, ln=0)
+    pdf.cell(rightFieldBoxWidth / 2, fieldBoxHeight, AppContext.h2obFinalEdit, border=1, ln=0)
     pdf.cell(rightColumnSpacing / 3, 7, 'PPB', align='R', ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(134, 7, 'Specification:', align='R', ln=0)
@@ -4226,13 +3940,13 @@ def exportBoth(startscreen):
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
             header_list[0]) + "_" + stop_timeet + ".pdf"
-        global pathF
+
     if startt_stopp == 'manage':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-            header_list[0]) + "_" + str(newStopTime.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
-        pathF = folder
+            header_list[0]) + "_" + str(AppContext.newStopTime.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
+        AppContext.pathF = folder
 
-    pdfpath = pathF + '/' + pdfname
+    pdfpath = AppContext.pathF + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
     os.chdir(dir_TGView)
@@ -4285,15 +3999,15 @@ def manage_pdf():
         # toop.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
         # toop.resizable(False,False)
         # toop.config(bg="Grey25")
-        folder = askopendirname(title='Choose Test to Edit', initialdir='/home/pi/TGView', foldercreation=False)
-        print(folder)
-        os.chdir(folder)
+        AppContext.edit_test_folder = askopendirname(title='Choose Test to Edit', initialdir='/home/pi/TGView', foldercreation=False)
+        print(AppContext.edit_test_folder)
+        os.chdir(AppContext.edit_test_folder)
         global O2csvFound, H2OcsvFound, BothcsvFound
         O2csvFound = False
         H2OcsvFound = False
         BothcsvFound = False
         try:
-            for file in os.listdir(folder):
+            for file in os.listdir(AppContext.edit_test_folder):
                 try:
                     if file.startswith("H2O") and file.endswith(".csv"):
                         H2Ocsv = file
@@ -4318,21 +4032,21 @@ def manage_pdf():
         if O2csvFound == True and H2OcsvFound == True:
             BothcsvFound = True
 
-        global top
-        top = Toplevel()
+
+        AppContext.opencv_toplevel = Toplevel()
         # Width and height for the Tk root window
         w = 1820
         h = 980
         # This gets the current screen width and height
-        ws = top.winfo_screenwidth()
-        hs = top.winfo_screenheight()
+        ws = AppContext.opencv_toplevel.winfo_screenwidth()
+        hs = AppContext.opencv_toplevel.winfo_screenheight()
         # Calculate the x and y coordinates based on the current screen size
         sx = (ws / 2) - (w / 2)
         sy = (hs / 2) - (h / 2)
         # Open the root window in the middle of the screen
-        top.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
-        top.resizable(False, False)
-        top.config(bg="Grey25")
+        AppContext.opencv_toplevel.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
+        AppContext.opencv_toplevel.resizable(False, False)
+        AppContext.opencv_toplevel.config(bg="Grey25")
         global ff1
         global ff2
         ff1 = Figure(figsize=(5, 6), dpi=100, facecolor=(0.40, 0.51, 0.46))
@@ -4360,28 +4074,18 @@ def manage_pdf():
         global H2OxbReset
         global H2Oyb
 
-        global oldStartTimeRH2O
-        global oldStopTimeRH2O
-        global oldStartTimeRO2
-        global oldStopTimeRO2
-        global h2obMaxUnedit
-        global h2obFinalUnedit
-        global h2obAvgUnedit
-        global o2bAvgUnedit
-        global o2bMaxUnedit
-        global o2bFinalUnedit
         durationFont = ("century gothic", 16, "bold")
         durationFont1 = ("century gothic", 14, "bold")
 
         # No CSV files found
         if H2Ocsv is None and O2csv is None:
             print("No H2O or O2 CSV file found.")
-            tk.Button(top, text="OK", fg="white", activeforeground="white", bg="#d73a3a", activebackground="#d94d4d",
+            tk.Button(AppContext.opencv_toplevel, text="OK", fg="white", activeforeground="white", bg="#d73a3a", activebackground="#d94d4d",
                       font=("century gothic", 50, "bold"), command=BackToSelect).place(height=150, width=880, x=75,
                                                                                        y=495)
-            tk.Label(top, text="Selection Error:", fg="#d73a3a", bg="Grey25", font=("Century Gothic", 85, "bold"),
+            tk.Label(AppContext.opencv_toplevel, text="Selection Error:", fg="#d73a3a", bg="Grey25", font=("Century Gothic", 85, "bold"),
                      justify="center", wraplength=900).place(x=90, y=75)
-            tk.Label(top, text="The folder you selected does not contain an O2 or H2O CSV file.", fg="white",
+            tk.Label(AppContext.opencv_toplevel, text="The folder you selected does not contain an O2 or H2O CSV file.", fg="white",
                      bg="Grey25", font=("Century Gothic", 40, "bold"), justify="center", wraplength=850).place(x=95,
                                                                                                                y=270)
 
@@ -4391,7 +4095,7 @@ def manage_pdf():
         # ------------------------------------------------------------------------------ #
         elif H2Ocsv is None:
             print("H2O file NOT found")
-            o2Path = os.path.join(folder, O2csv)
+            o2Path = os.path.join(AppContext.edit_test_folder, O2csv)
             # Using the O2 path, transfer data from O2csv file into corresponding lists
             with open(o2Path) as csvO2:
                 plots = csv.reader(csvO2, delimiter=',')
@@ -4400,7 +4104,7 @@ def manage_pdf():
                     yy2.append(float(row[1]))
 
             # This handles the O2 header file
-            dualHeaderPath = os.path.join(folder, headercsv)
+            dualHeaderPath = os.path.join(AppContext.edit_test_folder, headercsv)
             with open(dualHeaderPath) as csvHeaderBoth:
                 bothheadernew = csv.reader(csvHeaderBoth, delimiter=',')
                 for row in bothheadernew:
@@ -4415,32 +4119,28 @@ def manage_pdf():
             canvas1.get_tk_widget().place(x=10, y=10)
 
             def update_and_generatePDF():
-
                 confirm_fields(start_stop='manage')
 
-            tk.Button(top, text="Generate New PDF Report", font=LARGE_FONT, bg="grey35", activebackground="orange",
+            tk.Button(AppContext.opencv_toplevel, text="Generate New PDF Report", font=LARGE_FONT, bg="grey35", activebackground="orange",
                       fg="White", activeforeground="white", highlightbackground="orange", highlightthickness=2,
                       relief=FLAT, command=update_and_generatePDF).place(height=90, width=500, x=520, y=620)
-            tk.Button(top, text="Return to Dashboard", font=LARGE_FONT, bg="grey35", activebackground="FireBrick1",
+            tk.Button(AppContext.opencv_toplevel, text="Return to Dashboard", font=LARGE_FONT, bg="grey35", activebackground="FireBrick1",
                       fg="White", activeforeground="white", highlightbackground="FireBrick1", highlightthickness=2,
                       relief=FLAT, command=BackToSelect).place(height=90, width=500, x=10, y=620)
 
-            global oldStartTimeRO2
-            global oldStopTimeRO2
-
-            oldStartTimeRO2 = min(xx2)
-            oldStopTimeRO2 = str(max(xx2))
+            AppContext.oldStartTimeRO2 = min(xx2)
+            AppContext.oldStopTimeRO2 = str(max(xx2))
             oldStartTime = header_list[18]
             oldStartTime, oldStartTimeMins, garbage = oldStartTime.split(":")
             oldStartTime, oldStartTimeHours = oldStartTime.split(" ")
             oldStartTimeYear, oldStartTimeMonth, oldStartTimeDay = oldStartTime.split("-")
-            oldStartTimeRO2 = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
+            AppContext.oldStartTimeRO2 = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
                                        int(oldStartTimeHours), int(oldStartTimeMins))
 
-            oldStopTimeMins, oldStopTimeSec = oldStopTimeRO2.split(".")
+            oldStopTimeMins, oldStopTimeSec = AppContext.oldStopTimeRO2.split(".")
             oldStopTimeHours, oldStopTimeMins = divmod(int(oldStopTimeMins), 60)
             oldStopTimeSec = int(oldStopTimeSec) / 10 * 6
-            oldStopTimeRO2 = oldStartTimeRO2 + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
+            AppContext.oldStopTimeRO2 = AppContext.oldStartTimeRO2 + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
                                                          seconds=int(oldStopTimeSec))
 
             # setting the top (original) graph
@@ -4470,20 +4170,18 @@ def manage_pdf():
             O2durationYfield = H2OdurationYfield
             durationWidth = 250
 
-            o2bAvgUnedit = str(round(mean(yy2), 1))
-            o2bMaxUnedit = str(round(max(yy2), 1))
-            o2bFinalUnedit = str(round(yy2[-1], 1))
+            AppContext.o2bAvgUnedit = str(round(mean(yy2), 1))
+            AppContext.o2bMaxUnedit = str(round(max(yy2), 1))
+            AppContext.o2bFinalUnedit = str(round(yy2[-1], 1))
 
             def onselectO2only(xmin, xmax):
                 O2min, O2max = np.searchsorted(xx2, (xmin, xmax))
                 O2max = min(len(xx2) - 1, O2max)
-                global O2xb
-                global O2yb
-                O2xb = xx2[O2min:O2max]
-                O2yb = yy2[O2min:O2max]
-                line2.set_data(O2xb, O2yb)
-                # print(O2xb+O2yb)
-                ax2.set_xlim(O2xb[0], O2xb[-1])
+                AppContext.O2xb = xx2[O2min:O2max]
+                AppContext.O2yb = yy2[O2min:O2max]
+                line2.set_data(AppContext.O2xb, AppContext.O2yb)
+                # print(AppContext.O2xb+AppContext.O2yb)
+                ax2.set_xlim(AppContext.O2xb[0], AppContext.O2xb[-1])
                 dataRangeo2 = max(yy2) - min(yy2)
                 if min(yy2) < 0:
                     ax2.set_ylim(bottom=min(yy2) + 10, top=max(yy2) + 10)
@@ -4491,55 +4189,44 @@ def manage_pdf():
                     ax2.set_ylim(0 - 1, top=max(yy2) + 10)
                 ff2.canvas.draw_idle()
 
-                addStartTimeO2 = str(O2xb[0])
+                addStartTimeO2 = str(AppContext.O2xb[0])
                 addStartTimeMinsO2, addStartTimeSecO2 = addStartTimeO2.split(".")
-                global newStartTimeO2
-                newStartTimeO2 = oldStartTimeRO2 + timedelta(minutes=int(addStartTimeMinsO2),
+                AppContext.newStartTimeO2 = AppContext.oldStartTimeRO2 + timedelta(minutes=int(addStartTimeMinsO2),
                                                              seconds=int(addStartTimeSecO2))
 
-                # global oldStopTimeRO2
-                # print(oldStopTimeRO2)
-                # oldStopTimeRO2hours,oldStopTimeRO2, garbage =  str(oldStopTimeRO2).split(':')
-                # print(oldStopTimeRO2)
-                # oldStopTimeRO2mins,oldStopTimeRO2 =  str(oldStopTimeRO2).split(' ')
-                # oldStopTimeRO2month, oldStopTimeRO2day, oldStopTimeRO2year =  str(oldStopTimeRO2).split('/')
-                # oldStopTimeRO2year = int(oldStopTimeRO2year)+2000
-                # oldStopTimeRO2 = datetime(oldStopTimeRO2year,int(oldStopTimeRO2month),int(oldStopTimeRO2day),int(oldStopTimeRO2hours),int(oldStopTimeRO2mins))
-                # print(oldStopTimeRO2)
+                # global AppContext.oldStopTimeRO2
+                # print(AppContext.oldStopTimeRO2)
+                # AppContext.oldStopTimeRO2hours,AppContext.oldStopTimeRO2, garbage =  str(AppContext.oldStopTimeRO2).split(':')
+                # print(AppContext.oldStopTimeRO2)
+                # AppContext.oldStopTimeRO2mins,AppContext.oldStopTimeRO2 =  str(AppContext.oldStopTimeRO2).split(' ')
+                # AppContext.oldStopTimeRO2month, AppContext.oldStopTimeRO2day, AppContext.oldStopTimeRO2year =  str(AppContext.oldStopTimeRO2).split('/')
+                # AppContext.oldStopTimeRO2year = int(AppContext.oldStopTimeRO2year)+2000
+                # AppContext.oldStopTimeRO2 = datetime(AppContext.oldStopTimeRO2year,int(AppContext.oldStopTimeRO2month),int(AppContext.oldStopTimeRO2day),int(AppContext.oldStopTimeRO2hours),int(AppContext.oldStopTimeRO2mins))
+                # print(AppContext.oldStopTimeRO2)
 
-                addStopTimeO2 = str(O2xb[-1])
+                addStopTimeO2 = str(AppContext.O2xb[-1])
                 addStopTimeMinsO2, addStopTimeSecO2 = addStopTimeO2.split(".")
-                global newStopTimeO2
-                newStopTimeO2 = oldStartTimeRO2 + timedelta(minutes=int(addStopTimeMinsO2),
+
+                AppContext.newStopTimeO2 = AppContext.oldStartTimeRO2 + timedelta(minutes=int(addStopTimeMinsO2),
                                                             seconds=int(addStopTimeSecO2))
 
                 global newTime_durationO2
 
-                newTime_durationO2 = newStopTimeO2 - newStartTimeO2
+                newTime_durationO2 = AppContext.newStopTimeO2 - AppContext.newStartTimeO2
                 newTime_durationO2 = time_elapsed_string(newTime_durationO2)
 
-                tk.Label(top, text=newTime_durationO2, fg="#ff9500", bg="grey35", font=durationFont).place(
+                tk.Label(AppContext.opencv_toplevel, text=newTime_durationO2, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=O2durationXfield, y=O2durationYfield)
-                tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
+                tk.Label(AppContext.opencv_toplevel, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
                     width=durationWidth, x=O2durationXfield - 250, y=O2durationYfield)
 
-                def incremental_range(start, stop, inc):
-                    value = start
-                    while value < stop:
-                        yield value
-                        value += inc
-
-                global O2xbReset
-                O2xbReset = list(incremental_range(0, len(O2xb), TestingIncValue))
-                global o2bAvgEdit
-                o2bAvgEdit = str(round(mean(O2yb), 1))
-                global o2bMaxEdit
-                o2bMaxEdit = str(round(max(O2yb), 1))
-                global o2bFinalEdit
-                o2bFinalEdit = str(round(O2yb[-1], 1))
+                AppContext.O2xbReset = list(incremental_range(0, len(AppContext.O2xb), TestingIncValue))
+                AppContext.o2bAvgEdit = str(round(mean(AppContext.O2yb), 1))
+                AppContext.o2bMaxEdit = str(round(max(AppContext.O2yb), 1))
+                AppContext.o2bFinalEdit = str(round(AppContext.O2yb[-1], 1))
 
                 # Save the selection into a separate .out file
-                np.savetxt("O2.out", np.c_[O2xb, O2yb])
+                np.savetxt("O2.out", np.c_[AppContext.O2xb, AppContext.O2yb])
 
             # set useblit True on gtkagg for enhanced performance
             span = SpanSelector(aa2, onselectO2only, 'horizontal', useblit=True,
@@ -4553,7 +4240,7 @@ def manage_pdf():
         # ------------------------------------------------------------------------------ #
         elif O2csv is None:
             print("O2 file NOT found")
-            h2oPath = os.path.join(folder, H2Ocsv)
+            h2oPath = os.path.join(AppContext.edit_test_folder, H2Ocsv)
             # Using the H2O path, transfer data from H2Ocsv file into corresponding lists
             with open(h2oPath) as csvH2O:
                 plots = csv.reader(csvH2O, delimiter=',')
@@ -4562,7 +4249,7 @@ def manage_pdf():
                     yy1.append(float(row[1]))
 
             # This handles the h2O header file
-            dualHeaderPath = os.path.join(folder, headercsv)
+            dualHeaderPath = os.path.join(AppContext.edit_test_folder, headercsv)
             with open(dualHeaderPath) as csvHeaderBoth:
                 bothheadernew = csv.reader(csvHeaderBoth, delimiter=',')
                 for row in bothheadernew:
@@ -4578,21 +4265,21 @@ def manage_pdf():
             aa1 = ff1.add_subplot(211, facecolor=(0.25, 0.25, 0.25))
             canvas2 = FigureCanvasTkAgg(ff1, master=top)
             canvas2.get_tk_widget().place(x=10, y=10)
-            tk.Button(top, text="Save as PDF", fg="white", activeforeground="white", bg="#d73a3a",
+            tk.Button(AppContext.opencv_toplevel, text="Save as PDF", fg="white", activeforeground="white", bg="#d73a3a",
                       activebackground="#d94d4d", font=("century gothic", 30, "bold"),
                       command=update_and_generatePDF).place(height=90, width=500, x=520, y=620)
-            tk.Button(top, text="Back to Select", fg="white", activeforeground="white", bg="#ff9500",
+            tk.Button(AppContext.opencv_toplevel, text="Back to Select", fg="white", activeforeground="white", bg="#ff9500",
                       activebackground="#ffab34", font=("century gothic", 30, "bold"), command=BackToSelect).place(
                 height=90, width=500, x=10, y=620)
 
-            oldStartTimeRH2O = min(xx1)
+            AppContext.oldStartTimeRH2 = min(xx1)
             oldStopTime = str(max(xx1))
             print(oldStopTime)
             oldStartTime = header_list[18]
             oldStartTime, oldStartTimeMins, garbage = oldStartTime.split(":")
             oldStartTime, oldStartTimeHours = oldStartTime.split(" ")
             oldStartTimeYear, oldStartTimeMonth, oldStartTimeDay = oldStartTime.split("-")
-            oldStartTimeRH2O = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
+            AppContext.oldStartTimeRH2 = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
                                         int(oldStartTimeHours), int(oldStartTimeMins))
 
             try:
@@ -4601,7 +4288,7 @@ def manage_pdf():
                 oldStopTimeMins, oldStopTimeSec = oldStopTime.split(".")
                 oldStopTimeHours, oldStopTimeMins = divmod(int(oldStopTimeMins), 60)
                 oldStopTimeSec = int(oldStopTimeSec) / 10 * 6
-                oldStopTimeRH2O = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours),
+                AppContext.oldStopTimeRH2O = AppContext.oldStartTimeRH2 + timedelta(hours=int(oldStopTimeHours),
                                                                minutes=int(oldStopTimeMins),
                                                                seconds=int(oldStopTimeSec))
             else:
@@ -4609,7 +4296,7 @@ def manage_pdf():
                 oldStopTime, oldStopTimeMins, garbage = oldStopTime.split(":")
                 oldStopTime, oldStopTimeHours = oldStopTime.split(" ")
                 oldStopTimeYear, oldStopTimeMonth, oldStopTimeDay = oldStopTime.split("-")
-                oldStopTimeRH2O = datetime(int(oldStopTimeYear), int(oldStopTimeMonth), int(oldStopTimeDay),
+                AppContext.oldStopTimeRH2O = datetime(int(oldStopTimeYear), int(oldStopTimeMonth), int(oldStopTimeDay),
                                            int(oldStopTimeHours), int(oldStopTimeMins))
 
             # setting the top (original) graph
@@ -4637,9 +4324,9 @@ def manage_pdf():
             O2durationYfield = H2OdurationYfield
             durationWidth = 250
 
-            h2obAvgUnedit = str(round(mean(yy1), 1))
-            h2obMaxUnedit = str(round(max(yy1), 1))
-            h2obFinalUnedit = str(round(yy1[-1], 1))
+            AppContext.h2obAvgUnedit = str(round(mean(yy1), 1))
+            AppContext.h2obMaxUnedit = str(round(max(yy1), 1))
+            AppContext.h2obFinalUnedit = str(round(yy1[-1], 1))
 
             def onselectH2Oonly(xmin, xmax):
                 H2Omin, H2Omax = np.searchsorted(xx1, (xmin, xmax))
@@ -4658,39 +4345,31 @@ def manage_pdf():
                 addStartTime = str(H2Oxb[0])
                 addStartTimeMins, addStartTimeSec = addStartTime.split(".")
                 global newStartTime
-                newStartTime = oldStartTimeRH2O + timedelta(minutes=int(addStartTimeMins), seconds=int(addStartTimeSec))
-                print(newStartTime)
+                AppContext.newStartTime = AppContext.oldStartTimeRH2 + timedelta(minutes=int(addStartTimeMins), seconds=int(addStartTimeSec))
+                print(AppContext.newStartTime)
 
                 addStopTime = str(H2Oxb[-1])
                 addStopTimeMins, addStopTimeSec = addStopTime.split(".")
-                global newStopTime
-                newStopTime = oldStartTimeRH2O + timedelta(minutes=int(addStopTimeMins), seconds=int(addStopTimeSec))
-                print(newStopTime)
-                global newTime_durationH2O
-                newTime_durationH2O = newStopTime - newStartTime
 
-                newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
+                AppContext.newStopTime = AppContext.oldStartTimeRH2 + timedelta(minutes=int(addStopTimeMins), seconds=int(addStopTimeSec))
+                print(AppContext.newStopTime)
 
-                tk.Label(top, text=newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
+                AppContext.newTime_durationH2O = AppContext.newStopTime - AppContext.newStartTime
+
+                AppContext.newTime_durationH2O = time_elapsed_string(AppContext.newTime_durationH2O)
+
+                tk.Label(AppContext.opencv_toplevel, text=AppContext.newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=H2OdurationXfield, y=H2OdurationYfield)
-                tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
+                tk.Label(AppContext.opencv_toplevel, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
                     width=durationWidth, x=H2OdurationXfield - 250, y=H2OdurationYfield)
-
-                def incremental_range(start, stop, inc):
-                    value = start
-                    while value < stop:
-                        yield value
-                        value += inc
 
                 global H2OxbReset
                 H2OxbReset = list(incremental_range(0, len(H2Oxb), TestingIncValue))
 
-                global h2obAvgEdit
-                h2obAvgEdit = str(round(mean(H2Oyb), 1))
+                AppContext.h2obAvgEdit = str(round(mean(H2Oyb), 1))
                 global h2obMaxEdit
                 h2obMaxEdit = str(round(max(H2Oyb), 1))
-                global h2obFinalEdit
-                h2obFinalEdit = str(round(H2Oyb[-1], 1))
+                AppContext.h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
                 # Save the selection into a separate .out file
                 np.savetxt("H2O.out", np.c_[H2Oxb, H2Oyb])
@@ -4707,7 +4386,7 @@ def manage_pdf():
         # ------------------------------------------------------------------------------ #
         else:
             # This handles the H2O file and graph
-            h2oPath = os.path.join(folder, H2Ocsv)
+            h2oPath = os.path.join(AppContext.edit_test_folder, H2Ocsv)
             with open(h2oPath) as csvH2O:
                 plots = csv.reader(csvH2O, delimiter=',')
                 for row in plots:
@@ -4715,7 +4394,7 @@ def manage_pdf():
                     yy1.append(float(row[1]))
 
             # This handles the header file
-            dualHeaderPath = os.path.join(folder, headercsv)
+            dualHeaderPath = os.path.join(AppContext.edit_test_folder, headercsv)
             with open(dualHeaderPath) as csvHeaderBoth:
                 bothheadernew = csv.reader(csvHeaderBoth, delimiter=',')
                 for row in bothheadernew:
@@ -4723,7 +4402,7 @@ def manage_pdf():
                 print("headers for both graphs: " + str(header_list))
 
             # This handles the O2 file and graph
-            o2Path = os.path.join(folder, O2csv)
+            o2Path = os.path.join(AppContext.edit_test_folder, O2csv)
             with open(o2Path) as csvO2:
                 plots = csv.reader(csvO2, delimiter=',')
                 for row in plots:
@@ -4757,15 +4436,15 @@ def manage_pdf():
             buttonXfield = 10
             buttonYfield = 870
             buttonPad = 905
-            # tk.Button(top, text="Save this Graph", fg="white", activeforeground="white", bg="#d73a3a",\
+            # tk.Button(AppContext.opencv_toplevel, text="Save this Graph", fg="white", activeforeground="white", bg="#d73a3a",\
             # activebackground="#d94d4d", font=("century gothic",30,"bold"), command=update_and_generatePDF).place(height=100,width=895,x=buttonXfield+buttonPad,y=buttonYfield)
 
-            # tk.Button(top, text="Exit", fg="white", activeforeground="white", bg="#ff9500", activebackground="#ffab34", font=("century gothic",30,"bold"), command=BackToSelect).place(height=100,width=895,x=buttonXfield,y=buttonYfield)
-            tk.Button(top, text="Generate New Report", font=LARGE_FONT, bg="grey35", activebackground="orange",
+            # tk.Button(AppContext.opencv_toplevel, text="Exit", fg="white", activeforeground="white", bg="#ff9500", activebackground="#ffab34", font=("century gothic",30,"bold"), command=BackToSelect).place(height=100,width=895,x=buttonXfield,y=buttonYfield)
+            tk.Button(AppContext.opencv_toplevel, text="Generate New Report", font=LARGE_FONT, bg="grey35", activebackground="orange",
                       fg="White", activeforeground="white", highlightbackground="orange", highlightthickness=2,
                       relief=FLAT, command=update_and_generatePDF).place(height=100, width=895,
                                                                          x=buttonXfield + buttonPad, y=buttonYfield)
-            tk.Button(top, text="Cancel/Close Window", font=LARGE_FONT, bg="grey35", activebackground="FireBrick1",
+            tk.Button(AppContext.opencv_toplevel, text="Cancel/Close Window", font=LARGE_FONT, bg="grey35", activebackground="FireBrick1",
                       fg="White", activeforeground="white", highlightbackground="FireBrick1", highlightthickness=2,
                       relief=FLAT, command=BackToSelect).place(height=100, width=895, x=buttonXfield, y=buttonYfield)
 
@@ -4785,25 +4464,25 @@ def manage_pdf():
                 aa1.set_ylim(0, top=max(yy1) + 10)
             # ff1.subplots_adjust(top=.90, hspace=0.3)
 
-            oldStartTimeRH2O = min(xx1)
+            AppContext.oldStartTimeRH2 = min(xx1)
             oldStopTime = str(max(xx1))
             print(oldStopTime)
             oldStartTime = header_list[18]
             oldStartTime, oldStartTimeMins, garbage = oldStartTime.split(":")
             oldStartTime, oldStartTimeHours = oldStartTime.split(" ")
             oldStartTimeYear, oldStartTimeMonth, oldStartTimeDay = oldStartTime.split("-")
-            oldStartTimeRH2O = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
+            AppContext.oldStartTimeRH2 = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
                                         int(oldStartTimeHours), int(oldStartTimeMins))
 
             oldStopTimeMins, oldStopTimeSec = oldStopTime.split(".")
             oldStopTimeHours, oldStopTimeMins = divmod(int(oldStopTimeMins), 60)
             oldStopTimeSec = int(oldStopTimeSec) / 10 * 6
-            oldStopTimeRH2O = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
+            AppContext.oldStopTimeRH2O = AppContext.oldStartTimeRH2 + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
                                                            seconds=int(oldStopTimeSec))
 
-            h2obAvgUnedit = str(round(mean(yy1), 1))
-            h2obMaxUnedit = str(round(max(yy1), 1))
-            h2obFinalUnedit = str(round(yy1[-1], 1))
+            AppContext.h2obAvgUnedit = str(round(mean(yy1), 1))
+            AppContext.h2obMaxUnedit = str(round(max(yy1), 1))
+            AppContext.h2obFinalUnedit = str(round(yy1[-1], 1))
 
             # Setting up the top O2 graph
             aa2.plot(xx2, yy2, color='#60d500', linewidth=lineWidthEdit, marker=markerStyle, markersize=pointSize)
@@ -4819,34 +4498,34 @@ def manage_pdf():
                 aa2.set_ylim(0, top=max(yy2) + 10)
             # ff1.subplots_adjust(top=.90, hspace=0.3, wspace=0.3)
 
-            oldStartTimeRO2 = min(xx2)
-            oldStopTimeRO2 = str(max(xx2))
+            AppContext.oldStartTimeRO2 = min(xx2)
+            AppContext.oldStopTimeRO2 = str(max(xx2))
             oldStartTime = header_list[18]
             oldStartTime, oldStartTimeMins, garbage = oldStartTime.split(":")
             oldStartTime, oldStartTimeHours = oldStartTime.split(" ")
             oldStartTimeYear, oldStartTimeMonth, oldStartTimeDay = oldStartTime.split("-")
-            oldStartTimeRO2 = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
+            AppContext.oldStartTimeRO2 = datetime(int(oldStartTimeYear), int(oldStartTimeMonth), int(oldStartTimeDay),
                                        int(oldStartTimeHours), int(oldStartTimeMins))
 
             try:
                 header_list[19]
             except:
-                oldStopTimeMins, oldStopTimeSec = oldStopTimeRO2.split(".")
+                oldStopTimeMins, oldStopTimeSec = AppContext.oldStopTimeRO2.split(".")
                 oldStopTimeHours, oldStopTimeMins = divmod(int(oldStopTimeMins), 60)
                 oldStopTimeSec = int(oldStopTimeSec) / 10 * 6
-                oldStopTimeRO2 = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
+                AppContext.oldStopTimeRO2 = AppContext.oldStartTimeRH2 + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
                                                               seconds=int(oldStopTimeSec))
             else:
                 oldStopTime = header_list[19]
                 oldStopTime, oldStopTimeMins, garbage = oldStopTime.split(":")
                 oldStopTime, oldStopTimeHours = oldStopTime.split(" ")
                 oldStopTimeYear, oldStopTimeMonth, oldStopTimeDay = oldStopTime.split("-")
-                oldStopTimeRO2 = datetime(int(oldStopTimeYear), int(oldStopTimeMonth), int(oldStopTimeDay),
+                AppContext.oldStopTimeRO2 = datetime(int(oldStopTimeYear), int(oldStopTimeMonth), int(oldStopTimeDay),
                                           int(oldStopTimeHours), int(oldStopTimeMins))
 
-            o2bAvgUnedit = str(round(mean(yy2), 1))
-            o2bMaxUnedit = str(round(max(yy2), 1))
-            o2bFinalUnedit = str(round(yy2[-1], 1))
+            AppContext.o2bAvgUnedit = str(round(mean(yy2), 1))
+            AppContext.o2bMaxUnedit = str(round(max(yy2), 1))
+            AppContext.o2bFinalUnedit = str(round(yy2[-1], 1))
 
             # Setting up bottom (edited) H2O graph
             ax1 = ff1.add_subplot(224, facecolor=(0.25, 0.25, 0.25))
@@ -4883,8 +4562,8 @@ def manage_pdf():
             durationWidth = 250
 
             #### unedited time duration labels (work in progress) ####
-            # timeLabelO21 = tk.Label(top, text=newTime_durationO2, fg="#ff9500", bg="#668275", font=durationFont).place(width=durationWidth,x=O2durationXfield,y=O2durationYfield)
-            # timeLabelO22 = tk.Label(top, text="Edited Test Duration = ", fg="white", bg="#668275", font=durationFont1).place(width=durationWidth,x=O2durationXfield-250,y=O2durationYfield)
+            # timeLabelO21 = tk.Label(AppContext.opencv_toplevel, text=newTime_durationO2, fg="#ff9500", bg="#668275", font=durationFont).place(width=durationWidth,x=O2durationXfield,y=O2durationYfield)
+            # timeLabelO22 = tk.Label(AppContext.opencv_toplevel, text="Edited Test Duration = ", fg="white", bg="#668275", font=durationFont1).place(width=durationWidth,x=O2durationXfield-250,y=O2durationYfield)
 
             # This handles the selection of the H2O graph
 
@@ -4905,38 +4584,28 @@ def manage_pdf():
 
                 addStartTime = str(H2Oxb[0])
                 addStartTimeMins, addStartTimeSec = addStartTime.split(".")
-                global newStartTime
-                newStartTime = oldStartTimeRH2O + timedelta(minutes=int(addStartTimeMins), seconds=int(addStartTimeSec))
+
+                AppContext.newStartTime = AppContext.oldStartTimeRH2 + timedelta(minutes=int(addStartTimeMins), seconds=int(addStartTimeSec))
 
                 addStopTime = str(H2Oxb[-1])
                 addStopTimeMins, addStopTimeSec = addStopTime.split(".")
-                global newStopTime
-                newStopTime = oldStartTimeRH2O + timedelta(minutes=int(addStopTimeMins), seconds=int(addStopTimeSec))
+                AppContext.newStopTime = AppContext.oldStartTimeRH2 + timedelta(minutes=int(addStopTimeMins), seconds=int(addStopTimeSec))
 
-                global newTime_durationH2O
-                newTime_durationH2O = newStopTime - newStartTime
-                newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
+                AppContext.newTime_durationH2O = AppContext.newStopTime - AppContext.newStartTime
+                AppContext.newTime_durationH2O = time_elapsed_string(AppContext.newTime_durationH2O)
 
-                tk.Label(top, text=newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
+                tk.Label(AppContext.opencv_toplevel, text=AppContext.newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=H2OdurationXfield, y=H2OdurationYfield)
-                tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
+                tk.Label(AppContext.opencv_toplevel, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
                     width=durationWidth, x=H2OdurationXfield - 250, y=H2OdurationYfield)
-
-                def incremental_range(start, stop, inc):
-                    value = start
-                    while value < stop:
-                        yield value
-                        value += inc
 
                 global H2OxbReset
                 H2OxbReset = list(incremental_range(0, len(H2Oxb), TestingIncValue))
 
-                global h2obAvgEdit
-                h2obAvgEdit = str(round(mean(H2Oyb), 1))
+                AppContext.h2obAvgEdit = str(round(mean(H2Oyb), 1))
                 global h2obMaxEdit
                 h2obMaxEdit = str(round(max(H2Oyb), 1))
-                global h2obFinalEdit
-                h2obFinalEdit = str(round(H2Oyb[-1], 1))
+                AppContext.h2obFinalEdit = str(round(H2Oyb[-1], 1))
 
                 # Save the selection into a separate .out file
                 np.savetxt("H2O.out", np.c_[H2Oxb, H2Oyb])
@@ -4946,13 +4615,12 @@ def manage_pdf():
 
                 O2min, O2max = np.searchsorted(xx2, (xmin, xmax))
                 O2max = min(len(xx2) - 1, O2max)
-                global O2xb
-                global O2yb
-                O2xb = xx2[O2min:O2max]
-                O2yb = yy2[O2min:O2max]
-                line2.set_data(O2xb, O2yb)
-                # print(O2xb+O2yb)
-                ax2.set_xlim(O2xb[0], O2xb[-1])
+
+                AppContext.O2xb = xx2[O2min:O2max]
+                AppContext.O2yb = yy2[O2min:O2max]
+                line2.set_data(AppContext.O2xb, AppContext.O2yb)
+                # print(AppContext.O2xb+O2yb)
+                ax2.set_xlim(AppContext.O2xb[0], AppContext.O2xb[-1])
                 dataRangeo2 = max(yy2) - min(yy2)
                 if min(yy2) < 0:
                     ax2.set_ylim(bottom=min(yy2) - 10, top=max(yy2) + 10)
@@ -4960,55 +4628,43 @@ def manage_pdf():
                     ax2.set_ylim(0, top=max(yy2) + 10)
                 ff1.canvas.draw_idle()
 
-                addStartTimeO2 = str(O2xb[0])
+                addStartTimeO2 = str(AppContext.O2xb[0])
                 addStartTimeMinsO2, addStartTimeSecO2 = addStartTimeO2.split(".")
-                global newStartTimeO2
-                newStartTimeO2 = oldStartTimeRO2 + timedelta(minutes=int(addStartTimeMinsO2),
+                AppContext.newStartTimeO2 = AppContext.oldStartTimeRO2 + timedelta(minutes=int(addStartTimeMinsO2),
                                                              seconds=int(addStartTimeSecO2))
 
-                # global oldStopTimeRO2
-                # print(oldStopTimeRO2)
-                # oldStopTimeRO2hours,oldStopTimeRO2, garbage =  str(oldStopTimeRO2).split(':')
-                # print(oldStopTimeRO2)
-                # oldStopTimeRO2mins,oldStopTimeRO2 =  str(oldStopTimeRO2).split(' ')
-                # oldStopTimeRO2month, oldStopTimeRO2day, oldStopTimeRO2year =  str(oldStopTimeRO2).split('/')
-                # oldStopTimeRO2year = int(oldStopTimeRO2year)+2000
-                # oldStopTimeRO2 = datetime(oldStopTimeRO2year,int(oldStopTimeRO2month),int(oldStopTimeRO2day),int(oldStopTimeRO2hours),int(oldStopTimeRO2mins))
-                # print(oldStopTimeRO2)
+                # global AppContext.oldStopTimeRO2
+                # print(AppContext.oldStopTimeRO2)
+                # AppContext.oldStopTimeRO2hours,AppContext.oldStopTimeRO2, garbage =  str(AppContext.oldStopTimeRO2).split(':')
+                # print(AppContext.oldStopTimeRO2)
+                # AppContext.oldStopTimeRO2mins,AppContext.oldStopTimeRO2 =  str(AppContext.oldStopTimeRO2).split(' ')
+                # AppContext.oldStopTimeRO2month, AppContext.oldStopTimeRO2day, AppContext.oldStopTimeRO2year =  str(AppContext.oldStopTimeRO2).split('/')
+                # AppContext.oldStopTimeRO2year = int(AppContext.oldStopTimeRO2year)+2000
+                # AppContext.oldStopTimeRO2 = datetime(AppContext.oldStopTimeRO2year,int(AppContext.oldStopTimeRO2month),int(AppContext.oldStopTimeRO2day),int(AppContext.oldStopTimeRO2hours),int(AppContext.oldStopTimeRO2mins))
+                # print(AppContext.oldStopTimeRO2)
 
-                addStopTimeO2 = str(O2xb[-1])
+                addStopTimeO2 = str(AppContext.O2xb[-1])
                 addStopTimeMinsO2, addStopTimeSecO2 = addStopTimeO2.split(".")
-                global newStopTimeO2
-                newStopTimeO2 = oldStartTimeRO2 + timedelta(minutes=int(addStopTimeMinsO2),
+                AppContext.newStopTimeO2 = AppContext.oldStartTimeRO2 + timedelta(minutes=int(addStopTimeMinsO2),
                                                             seconds=int(addStopTimeSecO2))
 
                 global newTime_durationO2
 
-                newTime_durationO2 = newStopTimeO2 - newStartTimeO2
+                newTime_durationO2 = AppContext.newStopTimeO2 - AppContext.newStartTimeO2
                 newTime_durationO2 = time_elapsed_string(newTime_durationO2)
 
-                tk.Label(top, text=newTime_durationO2, fg="#ff9500", bg="grey35", font=durationFont).place(
+                tk.Label(AppContext.opencv_toplevel, text=newTime_durationO2, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=O2durationXfield, y=O2durationYfield)
-                tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
+                tk.Label(AppContext.opencv_toplevel, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
                     width=durationWidth, x=O2durationXfield - 250, y=O2durationYfield)
 
-                def incremental_range(start, stop, inc):
-                    value = start
-                    while value < stop:
-                        yield value
-                        value += inc
-
-                global O2xbReset
-                O2xbReset = list(incremental_range(0, len(O2xb), TestingIncValue))
-                global o2bAvgEdit
-                o2bAvgEdit = str(round(mean(O2yb), 1))
-                global o2bMaxEdit
-                o2bMaxEdit = str(round(max(O2yb), 1))
-                global o2bFinalEdit
-                o2bFinalEdit = str(round(O2yb[-1], 1))
+                AppContext.O2xbReset = list(incremental_range(0, len(AppContext.O2xb), TestingIncValue))
+                AppContext.AppContext.o2bAvgEdit = str(round(mean(AppContext.O2yb), 1))
+                AppContext.AppContext.o2bMaxEdit = str(round(max(AppContext.O2yb), 1))
+                AppContext.AppContext.o2bFinalEdit = str(round(AppContext.O2yb[-1], 1))
 
                 # Save the selection into a separate .out file
-                np.savetxt("O2.out", np.c_[O2xb, O2yb])
+                np.savetxt("O2.out", np.c_[AppContext.O2xb, AppContext.O2yb])
 
             # set useblit True on gtkagg for enhanced performance
             spanH2O = SpanSelector(aa1, onselectH2O, 'horizontal', useblit=True,
@@ -5022,135 +4678,9 @@ def manage_pdf():
     #                                  COMMANDS                                      #
     # --------------------------------------------------------------------------------#
     def BackToSelect():
-        top.destroy()
+        AppContext.opencv_toplevel.destroy()
         ### variable resets ###
-        try:
-            global newStartTime
-            del newStartTime
-            print("deleted newStartTime")
-        except:
-            print("no newStartTime to delete")
-            pass
-        try:
-            global oldStartTimeRH2O
-            del oldStartTimeRH2O
-            print("deleted oldStartTimeRH2O")
-        except:
-            print("no oldStartTimeRH2O to delete")
-            pass
-        try:
-            global newStopTime
-            del newStopTime
-        except:
-            print("no newStartTime to delete")
-            pass
-        try:
-            global oldStopTimeRH2O
-            del oldStopTimeRH2O
-            print("deleted oldStopTimeRH2O")
-        except:
-            print("no newStartTime to delete")
-            pass
-        try:
-            global newStartTimeO2
-            del newStartTimeO2
-            print("deleted newStartTimeO2")
-        except:
-            print("no newStartTimeO2 to delete")
-            pass
 
-        try:
-            global oldStartTimeO2
-            del oldStartTimeO2
-            print("deleted oldStartTimeO2")
-        except:
-            print("no oldStartTimeO2 to delete")
-            pass
-        try:
-            global newStopTimeO2
-            del newStopTimeO2
-            print("deleted newStopTimeO2")
-        except:
-            print("no newStopTimeO2 to delete")
-            pass
-
-        try:
-            global oldStopTimeO2
-            del oldStopTimeO2
-            print("deleted oldStopTimeO2")
-        except:
-            print("no oldStopTimeO2 to delete")
-            pass
-        try:
-            global o2bAvgEdit
-            del o2bAvgEdit
-            print("deleted o2bAvgEdit")
-        except:
-            print("no o2bAvgEdit to delete")
-            pass
-        try:
-            global o2bAvgUnedit
-            del o2bAvgUnedit
-            print("deleted o2bAvgUnedit")
-        except:
-            print("no o2bAvgUnedit to delete")
-            pass
-        try:
-            global o2bMaxEdit
-            del o2bMaxEdit
-            print("deleted o2bMaxEdit")
-        except:
-            print("no o2bMaxEdit to delete")
-            pass
-        try:
-            global o2bMaxUnedit
-            del o2bMaxUnedit
-            print("deleted o2bMaxUnedit")
-        except:
-            print("no o2bMaxUnedit to delete")
-            pass
-        try:
-            global o2bFinalEdit
-            del o2bFinalEdit
-            print("deleted o2bFinalEdit")
-        except:
-            print("no o2bFinalEdit to delete")
-            pass
-        try:
-            global o2bFinalUnedit
-            del o2bFinalUnedit
-            print("deleted o2bFinalUnedit")
-        except:
-            print("no newStartTime to delete")
-            pass
-        try:
-            global h2obAvgEdit
-            del h2obAvgEdit
-            print("deleted h2obAvgEdit")
-        except:
-            print("no h2obAvgEdit to delete")
-            pass
-        try:
-            global h2obAvgUnedit
-            del h2obAvgUnedit
-            print("deleted h2obAvgUnedit")
-        except:
-            print("no h2obAvgUnedit to delete")
-            pass
-        try:
-            global h2obFinalEdit
-            del h2obFinalEdit
-            print("deleted h2obFinalEdit")
-        except:
-            print("no h2obFinalEdit to delete")
-            pass
-        try:
-            global h2obFinalUnedit
-            del h2obFinalUnedit
-            print("deleted h2obFinalUnedit")
-        except:
-            print("no h2obFinalUnedit to delete")
-            pass
 
     # --------------------------------------------------------------------------------#
     #                                  MAIN WINDOW                                   #
