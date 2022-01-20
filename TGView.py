@@ -2,12 +2,12 @@
 
 import matplotlib
 
+from GlobalConst import *
+from component.PopupWindow import PopupWindow
 from component.disconnect import disconnect
 from modules.AdjustFigure import AdjustFigure
-from GlobalConst import *
 from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
 from modules.serial import SerialInterface
-from component.PopupWindow import PopupWindow
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -27,12 +27,10 @@ from modules.manage_graph import ManageGraph
 import math
 import textwrap
 import shutil
-import random
-import serial
 import time
-import binascii
 import csv
 import tkinter as tk
+
 from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Progressbar
@@ -53,295 +51,6 @@ QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
 #### initial animation intervals are adjusted later###
 intervalO2 = 3500
 intervalH2O = 3500
-
-
-#### ~lines0-500 are serial communication functions ###
-# Function for converting decimal to binary
-def float_bin(number, places=3):
-    whole, dec = str(number).split(".")
-    print("whole = " + str(whole))
-    print("dec = " + str(dec))
-    whole = int(whole)
-    dec = int(dec)
-    if dec == 0:
-        dec = 1
-    if dec < 10:
-        dec += 10
-    for z in str(dec):
-        if z == 0:
-            z = 1
-    res = bin(whole).lstrip("0b") + "."
-    print("res = " + str(res))
-    for x in range(places):
-        whole, dec = str((decimal_converter(dec)) * 2).split(".")
-        dec = int(dec)
-        res += whole
-
-    return res
-
-
-# converts whole numbers to decimal equivalent (234 becomes .234)
-def decimal_converter(num):
-    while num > 1:
-        num /= 10
-    return num
-
-    # function for converting a float number to a 5 byte IEEE-754 packet
-
-
-def IEEE754(n):
-    # identifying whether the number
-    # is positive or negative
-    sign = 0
-    if n < 0:
-        sign = 1
-        n = n * (-1)
-    p = 30
-
-    # convert float to binary
-    dec = float_bin(n, places=p)
-
-    # separate the decimal part
-    # and the whole number part
-    whole, dec = str(dec).split(".")
-    whole = int(whole)
-
-    # calculating the exponent(E)
-    exponent = len(str(whole)) - 1
-    exponent_bits = 127 + exponent
-
-    # converting the exponent from
-    # decimal to binary
-    exponent_bits = bin(exponent_bits).lstrip("0b")
-
-    # finding the mantissa
-    mantissa = str(whole)[1:exponent + 1]
-    mantissa = mantissa + dec
-    mantissa = mantissa[0:23]
-
-    # the IEEE754 notation in binary
-    final = str(sign) + str(exponent_bits) + mantissa
-    byte1 = "0000" + final[0:4]
-    byte2 = "0" + final[4:11]
-    byte3 = "0" + final[11:18]
-    byte4 = "0" + final[18:25]
-    byte5 = "0" + final[25:32]
-    databyte1 = bytearray([int(byte1, 2)])
-    databyte2 = bytearray([int(byte2, 2)])
-    databyte3 = bytearray([int(byte3, 2)])
-    databyte4 = bytearray([int(byte4, 2)])
-    databyte5 = bytearray([int(byte5, 2)])
-
-    return (databyte1, databyte2, databyte3, databyte4, databyte5)
-
-
-# uses the write_serial_float function to write values to upper and lower meeco bands
-def write_upperandlower(valueToUpper, valueToLower):
-    write_serial_float(bytearray([178]), bytearray([15]), valueToUpper)
-    # time.sleep(0.02)
-    write_serial_float(bytearray([178]), bytearray([16]), valueToLower)
-
-
-# asks meeco for a decimal number
-###operand variables below:
-### 0 for raw cell value
-### 1 for avg cell value
-### 15 for upper band limit
-### 16 for lower band limit
-def read_serial_float(operand):
-    operand = bytearray([operand])
-
-    data = bytearray()
-    echo = bytearray()
-    command = bytearray([146])
-    # operand =bytearray([16])
-
-    sleepy = 0.02
-
-    ser = serial.Serial(
-        port=comPortMoist, \
-        baudrate=9600, \
-        parity=serial.PARITY_NONE, \
-        stopbits=serial.STOPBITS_ONE, \
-        bytesize=serial.EIGHTBITS, \
-        timeout=1)
-
-    # time.sleep(sleepy)
-    data = bytearray()
-    ser.write(command)  # send command byte
-    # time.sleep(sleepy)
-    echo = ser.read(1)  # recieve command byte
-    data = data + echo
-
-    ser.write(operand)
-    # time.sleep(sleepy)
-    echo = ser.read(2)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(bytearray([echo[-1]]))
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-    return (data)
-    # time.sleep(sleepy)
-
-    ser.close()
-
-
-# write a decimal number to the meeco
-###operand variables below:
-### 0 for raw cell value
-### 1 for avg cell value
-### 15 for upper band limit
-### 16 for lower band limit
-### command=bytearray([178]) for sending
-### command=bytearray([146]) for receiving
-def write_serial_float(command, operand, valueToWrite):
-    databytes = IEEE754(valueToWrite)
-
-    data = bytearray()
-    echo = bytearray()
-    # command=bytearray([178])
-    # operand =bytearray([15])
-    databyte1 = databytes[0]
-    databyte2 = databytes[1]
-    databyte3 = databytes[2]
-    databyte4 = databytes[3]
-    databyte5 = databytes[4]
-
-    sleepy = 0.02
-
-    ser = serial.Serial(
-        port=comPortMoist, \
-        baudrate=9600, \
-        parity=serial.PARITY_NONE, \
-        stopbits=serial.STOPBITS_ONE, \
-        bytesize=serial.EIGHTBITS, \
-        timeout=1)
-
-    # time.sleep(sleepy)
-    data = bytearray()
-    ser.write(command)  # send command byte
-    # time.sleep(sleepy)
-    echo = ser.read(1)  # recieve command byte
-    data = data + echo
-
-    ser.write(operand)
-    # time.sleep(sleepy)
-    echo = ser.read(2)
-    data = data + echo
-
-    ser.write(databyte1)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(databyte2)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(databyte3)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(databyte4)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(databyte5)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-    return (data)
-    # time.sleep(sleepy)
-
-    ser.close()
-
-
-# writes integers to meeco (current mode is the only thing that currently uses this)
-def write_serial_int(send, n):
-    databyte0 = "00000000"
-    databyte1 = "00000001"
-    databyte2 = "00000010"
-    if n == 0:
-        byte1 = bytearray([int(databyte0, 2)])
-        byte2 = bytearray([int(databyte0, 2)])
-        byte3 = bytearray([int(databyte0, 2)])
-    elif n == 1:
-        byte1 = bytearray([int(databyte0, 2)])
-        byte2 = bytearray([int(databyte0, 2)])
-        byte3 = bytearray([int(databyte1, 2)])
-    elif n == 2:
-        byte1 = bytearray([int(databyte0, 2)])
-        byte2 = bytearray([int(databyte0, 2)])
-        byte3 = bytearray([int(databyte2, 2)])
-    if send == True:
-        command = bytearray([162])
-    else:
-        command = bytearray([130])
-    operand = bytearray([4])
-    data = bytearray()
-    echo = bytearray()
-
-    sleepy = 0.03
-
-    ser = serial.Serial(
-        port=comPortMoist, \
-        baudrate=9600, \
-        parity=serial.PARITY_NONE, \
-        stopbits=serial.STOPBITS_ONE, \
-        bytesize=serial.EIGHTBITS, \
-        timeout=1)
-
-    ser.write(command)  # send command byte
-    # time.sleep(sleepy)
-    echo = ser.read(1)  # recieve command byte
-    data = data + echo
-
-    ser.write(operand)
-    # time.sleep(sleepy)
-    echo = ser.read(2)
-    data = data + echo
-
-    ser.write(byte1)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(byte2)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-
-    ser.write(byte3)
-    # time.sleep(sleepy)
-    echo = ser.read(1)
-    data = data + echo
-    return (int(data[4]))
-
-    ser.close()
-    if int(data[4]) == 1:
-        currentMode.set('Inert')
-    if int(data[4]) == 0:
-        currentMode.set('Service')
 
 
 #####GUI
@@ -930,7 +639,7 @@ def equipment_controls():
     ###Show/Change Current Meeco Mode
 
     currentMode = StringVar()
-    meecoMode = int(write_serial_int(False, 0))  #### comment out for random data###
+    meecoMode = int(SerialInterface.write_serial_int(False, 0))  #### comment out for random data###
     # meecoMode = 0
     if meecoMode == 1:
         currentMode.set('Inert')
@@ -938,9 +647,9 @@ def equipment_controls():
         currentMode.set('Service')
     currentUpper = StringVar()
     currentLower = StringVar()
-    currentUpper.set(round(float(raw_to_ppb(read_serial_float(15))), 1))  #### comment out for random data###
+    currentUpper.set(round(float(raw_to_ppb(SerialInterface.read_serial_float(15))), 1))  #### comment out for random data###
     # time.sleep(0.02)
-    currentLower.set(round(float(raw_to_ppb(read_serial_float(16))), 1))  #### comment out for random data###
+    currentLower.set(round(float(raw_to_ppb(SerialInterface.read_serial_float(16))), 1))  #### comment out for random data###
     global currentRaw
 
     modeXfield = 255
@@ -959,11 +668,11 @@ def equipment_controls():
     label14.place(x=modeXfield + modeXpad, y=168 + paddy)
 
     def change_to_service():
-        write_serial_int(True, 0)
+        SerialInterface.write_serial_int(True, 0)
         currentMode.set("Service")
 
     def change_to_inert():
-        write_serial_int(True, 1)
+        SerialInterface.write_serial_int(True, 1)
         currentMode.set("Inert")
 
     button1 = tk.Button(top5, text="Service", bg="grey35", activebackground="#2fa4ff", fg="White",

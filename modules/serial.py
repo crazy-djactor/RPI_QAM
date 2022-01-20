@@ -3,7 +3,7 @@ import random
 import time
 import serial
 
-from modules.Util import raw_to_ppb
+from modules.Util import raw_to_ppb, IEEE754
 
 
 class SerialInterface:
@@ -29,29 +29,28 @@ class SerialInterface:
                 time.sleep(0.2)
                 try:
                     testComOxygen = cls.get_O2()
-                    deltafConnected = True
+                    cls.deltafConnected = True
                     # print("deltaf connected")
                     # await asyncio.sleep(0.2)
                     time.sleep(0.2)
                 except:
-                    deltafConnected = False
-                comPortOxygen = '/dev/ttyUSB0'
+                    cls.deltafConnected = False
+                cls.comPortOxygen = '/dev/ttyUSB0'
                 # await asyncio.sleep(0.2)
                 time.sleep(0.2)
         except:
-            deltafConnected = False
+            cls.deltafConnected = False
             print("deltaf not connected")
             pass
 
-        global comPortMoist
-        comPortMoist = '/dev/ttyUSB0'
+        cls.comPortMoist = '/dev/ttyUSB0'
         try:
-            testComMoisture = raw_to_ppb(cls.get_h20())
-            comPortMoist = '/dev/ttyUSB0'
-            meecoConnected = True
+            cls.testComMoisture = raw_to_ppb(cls.get_h20())
+            cls.comPortMoist = '/dev/ttyUSB0'
+            cls.meecoConnected = True
         except:
-            comPortMoist = '/dev/ttyUSB1'
-            meecoConnected = False
+            cls.comPortMoist = '/dev/ttyUSB1'
+            cls.meecoConnected = False
 
         #         print("meeco not connected")
         # #await asyncio.sleep(1)
@@ -212,7 +211,207 @@ class SerialInterface:
         print('attempt FAILED for h2o')
         return 'N/A'
 
+    @classmethod
+    # asks meeco for a decimal number
+    ###operand variables below:
+    ### 0 for raw cell value
+    ### 1 for avg cell value
+    ### 15 for upper band limit
+    ### 16 for lower band limit
+    def read_serial_float(cls, operand):
+        operand = bytearray([operand])
 
+        data = bytearray()
+        echo = bytearray()
+        command = bytearray([146])
+        # operand =bytearray([16])
+
+        sleepy = 0.02
+
+        ser = serial.Serial(
+            port=cls.comPortMoist, \
+            baudrate=9600, \
+            parity=serial.PARITY_NONE, \
+            stopbits=serial.STOPBITS_ONE, \
+            bytesize=serial.EIGHTBITS, \
+            timeout=1)
+
+        # time.sleep(sleepy)
+        data = bytearray()
+        ser.write(command)  # send command byte
+        # time.sleep(sleepy)
+        echo = ser.read(1)  # recieve command byte
+        data = data + echo
+
+        ser.write(operand)
+        # time.sleep(sleepy)
+        echo = ser.read(2)
+        data = data + echo
+
+        ser.write(bytearray([echo[-1]]))
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(bytearray([echo[-1]]))
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(bytearray([echo[-1]]))
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(bytearray([echo[-1]]))
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+        ser.close()
+        return (data)
+        # time.sleep(sleepy)
+
+
+    # write a decimal number to the meeco
+    ###operand variables below:
+    ### 0 for raw cell value
+    ### 1 for avg cell value
+    ### 15 for upper band limit
+    ### 16 for lower band limit
+    ### command=bytearray([178]) for sending
+    ### command=bytearray([146]) for receiving
+    @classmethod
+    def write_serial_float(cls, command, operand, valueToWrite):
+        databytes = IEEE754(valueToWrite)
+        data = bytearray()
+        echo = bytearray()
+        # command=bytearray([178])
+        # operand =bytearray([15])
+        databyte1 = databytes[0]
+        databyte2 = databytes[1]
+        databyte3 = databytes[2]
+        databyte4 = databytes[3]
+        databyte5 = databytes[4]
+
+        sleepy = 0.02
+
+        ser = serial.Serial(
+            port=cls.comPortMoist, \
+            baudrate=9600, \
+            parity=serial.PARITY_NONE, \
+            stopbits=serial.STOPBITS_ONE, \
+            bytesize=serial.EIGHTBITS, \
+            timeout=1)
+
+        # time.sleep(sleepy)
+        data = bytearray()
+        ser.write(command)  # send command byte
+        # time.sleep(sleepy)
+        echo = ser.read(1)  # recieve command byte
+        data = data + echo
+
+        ser.write(operand)
+        # time.sleep(sleepy)
+        echo = ser.read(2)
+        data = data + echo
+
+        ser.write(databyte1)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(databyte2)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(databyte3)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(databyte4)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(databyte5)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+        ser.close()       #  ?????????
+        return (data)
+        # time.sleep(sleepy)
+
+    # writes integers to meeco (current mode is the only thing that currently uses this)
+    @classmethod
+    def write_serial_int(cls, send, n):
+        databyte0 = "00000000"
+        databyte1 = "00000001"
+        databyte2 = "00000010"
+        if n == 0:
+            byte1 = bytearray([int(databyte0, 2)])
+            byte2 = bytearray([int(databyte0, 2)])
+            byte3 = bytearray([int(databyte0, 2)])
+        elif n == 1:
+            byte1 = bytearray([int(databyte0, 2)])
+            byte2 = bytearray([int(databyte0, 2)])
+            byte3 = bytearray([int(databyte1, 2)])
+        elif n == 2:
+            byte1 = bytearray([int(databyte0, 2)])
+            byte2 = bytearray([int(databyte0, 2)])
+            byte3 = bytearray([int(databyte2, 2)])
+        if send == True:
+            command = bytearray([162])
+        else:
+            command = bytearray([130])
+        operand = bytearray([4])
+        data = bytearray()
+        echo = bytearray()
+
+        sleepy = 0.03
+
+        ser = serial.Serial(
+            port=cls.comPortMoist, \
+            baudrate=9600, \
+            parity=serial.PARITY_NONE, \
+            stopbits=serial.STOPBITS_ONE, \
+            bytesize=serial.EIGHTBITS, \
+            timeout=1)
+
+        ser.write(command)  # send command byte
+        # time.sleep(sleepy)
+        echo = ser.read(1)  # recieve command byte
+        data = data + echo
+
+        ser.write(operand)
+        # time.sleep(sleepy)
+        echo = ser.read(2)
+        data = data + echo
+
+        ser.write(byte1)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(byte2)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+
+        ser.write(byte3)
+        # time.sleep(sleepy)
+        echo = ser.read(1)
+        data = data + echo
+        ser.close()  #  ?????????
+        return int(data[4])
+
+    # uses the write_serial_float function to write values to upper and lower meeco bands
+    @classmethod
+    def write_upperandlower(cls, valueToUpper, valueToLower):
+        cls.write_serial_float(bytearray([178]), bytearray([15]), valueToUpper)
+        # time.sleep(0.02)
+        cls.write_serial_float(bytearray([178]), bytearray([16]), valueToLower)
 
 # ########EXPERIMENTAL: use this copy of get_O2 and replace in animation function to try to figure out how to read over 2PPM
 # def get_O2temp(comPortOxygen):
@@ -279,4 +478,5 @@ class SerialInterface:
 #     except Exception as e:
 #         print("get_O2 error:" + str(e))
 #         pass
+
 
