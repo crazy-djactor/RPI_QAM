@@ -2947,11 +2947,11 @@ def animateh2o(i):
                 print(
                     "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                 disconnect('disconnect')
-
         elif var2.get() == 'radO2':
             currenth2o.set('N/A')
             h2o = 9999
 
+        h2o = 0 if h2o < 0 else h2o
         if SerialInterface.meecoConnected:
             testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
@@ -2959,6 +2959,7 @@ def animateh2o(i):
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
             h2o = 0
 
+        print(f"get_valid_h2o - {h2o} - {SerialInterface.meecoConnected}")
         if not manageGraphData.update_h2o_values(h2o):
             return
 
@@ -3123,13 +3124,15 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         elif var2.get() == 'radH2O':
             currento2.set('N/A')
             o2 = 9999
-
+        o2 = 0 if o2 < 0 else o2
         if SerialInterface.deltafConnected:
             testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('o2 is fucked')
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
             o2 = 0
+
+        print(f"get_valid_o2 - {o2} - {SerialInterface.deltafConnected}")
 
         if not manageGraphData.update_o2_values(o2):
             return
@@ -3152,6 +3155,9 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             elif intervalO2 > 4000:
                 intervalO2 = 4000
             ani1.event_source.interval = int(intervalO2)
+
+            print("animateo2 " + str(round((o2time.total_seconds()) / 60, 5)) + " " + str(
+                round((o2time.total_seconds()) / 60, 0)) + " " + str(ani1.event_source.interval))
 
             ###active graphing
             global title
