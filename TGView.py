@@ -2950,16 +2950,17 @@ def animateh2o(i):
         elif var2.get() == 'radO2':
             currenth2o.set('N/A')
             h2o = 9999
+        print(f"get_valid_h2o - {h2o} - {SerialInterface.meecoConnected}")
 
-        h2o = 0 if h2o < 0 else h2o
+        # h2o = 0 if h2o < 0 else h2o
         if SerialInterface.meecoConnected:
-            testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
+            testingStatusMessageMeeco.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('h2o is fucked')
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
             h2o = 0
 
-        print(f"get_valid_h2o - {h2o} - {SerialInterface.meecoConnected}")
+
         if not manageGraphData.update_h2o_values(h2o):
             return
 
@@ -3124,7 +3125,9 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         elif var2.get() == 'radH2O':
             currento2.set('N/A')
             o2 = 9999
-        o2 = 0 if o2 < 0 else o2
+        print(f"get_valid_o2 - {o2} - {SerialInterface.deltafConnected}")
+
+        # o2 = 0 if o2 < 0 else o2
         if SerialInterface.deltafConnected:
             testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
@@ -3132,7 +3135,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
             o2 = 0
 
-        print(f"get_valid_o2 - {o2} - {SerialInterface.deltafConnected}")
+
 
         if not manageGraphData.update_o2_values(o2):
             return

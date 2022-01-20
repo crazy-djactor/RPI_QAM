@@ -116,6 +116,7 @@ class SerialInterface:
             return data
         except Exception as e:
             SerialInterface.meecoConnected = True if SerialInterface.demoMode else False
+            print("get_h2O error:" + str(e))
             return 'err'
         # await asyncio.sleep(sleepy)
         # time.sleep(sleepy)
