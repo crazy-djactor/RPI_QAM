@@ -3142,7 +3142,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             o2 = 9999
         print(f"get_valid_o2 - {o2} - {SerialInterface.deltafConnected}")
 
-        o2 = 0 if o2 < 0 else o2
         if SerialInterface.deltafConnected:
             testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
