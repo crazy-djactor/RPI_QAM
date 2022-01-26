@@ -50,6 +50,11 @@ class AppContext:
 
     newTime_durationH2O = None
     time_elapsedH2O = None
+
+    last_drawO2time = None
+    last_drawH2otime = None
+
+
     def __init__(self):
         directory = ""
 

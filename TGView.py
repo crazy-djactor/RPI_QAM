@@ -7,6 +7,7 @@ from component.PopupWindow import PopupWindow
 from component.disconnect import disconnect
 from modules.AdjustFigure import AdjustFigure
 from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
+from modules.context import AppContext
 from modules.serial import SerialInterface
 
 matplotlib.use("TkAgg")
@@ -49,9 +50,8 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True  ##required for loading certain images
 QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
 
 #### initial animation intervals are adjusted later###
-intervalO2 = 3500
-intervalH2O = 3500
-
+intervalO2 = 4000
+intervalH2O = 4000
 
 #####GUI
 
@@ -60,7 +60,6 @@ font0 = FontProperties()
 font0.set_family('sans-serif')
 font0.set_weight('bold')
 font0.set_size('xx-large')
-
 
 # assign matplotlib plot style
 style.use("seaborn-whitegrid")
@@ -173,7 +172,6 @@ class RPiReader(tk.Tk):
             sys.exit()
 
         ####Check to see which serial port sounds like a meeco and which sounds like a deltaf
-
 
         SerialInterface.serial_checker()
         # loop = asyncio.new_event_loop()
@@ -365,7 +363,7 @@ class StartPage(tk.Frame):
                                 activebackground="#00CD66", background="grey35", \
                                 highlightbackground="#00CD66", activeforeground="white", foreground="white",
                                 indicatoron=0, value="radO2", relief=FLAT, command=self.o2_selected).place(x=pax,
-                                                                                                      y=130)  # (x=pax,y=200+pay)
+                                                                                                           y=130)  # (x=pax,y=200+pay)
         rad_h2o = tk.Radiobutton(self, text="H2O", width=11, font=radioFont, variable=var2, selectcolor="#00BFFF",
                                  activebackground="#00BFFF", background="grey35", \
                                  highlightbackground="#00BFFF", activeforeground="white", foreground="white",
@@ -476,7 +474,7 @@ class StartPage(tk.Frame):
         # fg="#00CD66"
         # global labelO2_value
         self.labelO2_value = tk.Label(self, textvariable=currento2, width=6, bg="grey35", fg="#60D500",
-                                 font=('calibri', 20, 'bold'))
+                                      font=('calibri', 20, 'bold'))
         self.labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
 
         # Show Current H2O Reading
@@ -491,26 +489,27 @@ class StartPage(tk.Frame):
         if int(currenth2o.get()) < 0:
             currenth2o = 0
         self.labelH2O_value = tk.Label(self, textvariable=currenth2o, width=6, bg="grey35", fg="#00BFFF",
-                                  font=('calibri', 20, 'bold'))
+                                       font=('calibri', 20, 'bold'))
         self.labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
         self.bind('<<ShowFrame>>', self.on_show_frame)
 
     def h2o_selected(self):
-        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O,
+                        self.labelH2O_value)
         print(var2.get())
 
     def o2_selected(self):
-        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O,
+                        self.labelH2O_value)
         print(var2.get())
 
     def both_selected(self):
-        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        replace_objects(img_o2, img_h2o, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O,
+                        self.labelH2O_value)
         print(var2.get())
 
     def on_show_frame(self, event):
         print('Start Page onShowFrame')
-
-
 
 
 ### valindates input from user (used for writing int/float numbers to meeco... equipment controls)
@@ -647,9 +646,11 @@ def equipment_controls():
         currentMode.set('Service')
     currentUpper = StringVar()
     currentLower = StringVar()
-    currentUpper.set(round(float(raw_to_ppb(SerialInterface.read_serial_float(15))), 1))  #### comment out for random data###
+    currentUpper.set(
+        round(float(raw_to_ppb(SerialInterface.read_serial_float(15))), 1))  #### comment out for random data###
     # time.sleep(0.02)
-    currentLower.set(round(float(raw_to_ppb(SerialInterface.read_serial_float(16))), 1))  #### comment out for random data###
+    currentLower.set(
+        round(float(raw_to_ppb(SerialInterface.read_serial_float(16))), 1))  #### comment out for random data###
     global currentRaw
 
     modeXfield = 255
@@ -1092,12 +1093,11 @@ class PageOne(tk.Frame):
         # f1 = plt.figure(figsize=(10.1,6), dpi=100, facecolor=(0.40,0.51,0.46))
         # a1 = f1.add_subplot(211,facecolor=(0.25,0.25,0.25)
 
-
         # Oxygen DeltaF Graph
         self.canvas1 = FigureCanvasTkAgg(f1, self)
         self.canvas1.draw()
         self.canvas1.get_tk_widget().place(x=graphXfield, y=graphYfield)  # .place(x=graphXfield,y=graphYfield)
-            # Moisture Tracer Graph
+        # Moisture Tracer Graph
         self.canvas2 = FigureCanvasTkAgg(f2, self)
         self.canvas2.draw()
         self.canvas2.get_tk_widget().place(x=graphPad, y=graphYfield)  # .place(x=graphXfield+graphPad,y=graphYfield)
@@ -1204,7 +1204,8 @@ class PageOne(tk.Frame):
         self.labelO2.place(x=padx + testingPadX * m + 10, y=pady)
         self.labelO2.config(bg="grey35", fg="white")
 
-        self.labelO2_value = tk.Label(self, textvariable=currento2, bg="grey35", fg="#60D500", font=('lato', 20, 'bold'))
+        self.labelO2_value = tk.Label(self, textvariable=currento2, bg="grey35", fg="#60D500",
+                                      font=('lato', 20, 'bold'))
         self.labelO2_value.place(x=165 + padx + testingPadX * m + 10, y=pady)
         m += multiplier
         m += 2.2
@@ -1213,7 +1214,8 @@ class PageOne(tk.Frame):
         self.labelH2O.place(x=padx + testingPadX * m + 70, y=pady)
         self.labelH2O.config(bg="grey35", fg="white")
 
-        self.labelH2O_value = tk.Label(self, textvariable=currenth2o, bg="grey35", fg="#2FA4FF", font=('lato', 20, 'bold'))
+        self.labelH2O_value = tk.Label(self, textvariable=currenth2o, bg="grey35", fg="#2FA4FF",
+                                       font=('lato', 20, 'bold'))
         self.labelH2O_value.place(x=200 + padx + testingPadX * m + 70, y=pady)
 
         self.bind('<<ShowFrame>>', self.on_show_frame)
@@ -1329,7 +1331,8 @@ class PageOne(tk.Frame):
 
     def on_show_frame(self, event):
         print('onshow frame canvas')
-        config_canvas_test(self.canvas1, self.canvas2, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O, self.labelH2O_value)
+        config_canvas_test(self.canvas1, self.canvas2, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O,
+                           self.labelH2O_value)
 
 
 #### STOP CONFIRMATION WINDOW
@@ -2948,7 +2951,7 @@ def animateh2o(i):
             h2o_value = SerialInterface.get_valid_h2o(3)
             currenth2o.set(h2o_value)
             h2o = 999 if h2o_value == "N/A" else h2o_value
-            if recording == True and h2o_value == "N/A" and cycleH2O == 14:
+            if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
                 print(
                     "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                 disconnect('disconnect')
@@ -2957,7 +2960,7 @@ def animateh2o(i):
             h2o = 9999
         print(f"get_valid_h2o - {h2o} - {SerialInterface.meecoConnected}")
 
-        # h2o = 0 if h2o < 0 else h2o
+        h2o = 0 if h2o < 0 else h2o
         if SerialInterface.meecoConnected:
             testingStatusMessageMeeco.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
@@ -2965,69 +2968,72 @@ def animateh2o(i):
             testingStatusMessageMeeco.set("Check Tracer 2 Connection")
             h2o = 0
 
-
         if not manageGraphData.update_h2o_values(h2o):
             return
 
         party_time = False
         #### IP grabber ####
-        f = os.popen('ifconfig wlan0 | grep "inet 192" | cut -c 14-27')
-        current_ip = f.read()
+        # f = os.popen('ifconfig wlan0 | grep "inet 192" | cut -c 14-27')
+        # current_ip = f.read()
         # print(current_ip)
-        global title
-        global label69
-        global label68
-        global rec_bg
-        if isinstance(title, str):
-            if title == 'party time':
-                party_time = True
-                if rec_bg == '#1CCA3C':
-                    rec_bg = 'red'
-                    label69.configure(bg=rec_bg)
-                    label68.configure(bg=rec_bg)
-                elif rec_bg == 'red':
-                    rec_bg = '#1CCA3C'
-                    label69.configure(bg=rec_bg)
-                    label68.configure(bg=rec_bg)
-        else:
-            if title.get() == 'party time':
-                party_time = True
-                if rec_bg == '#1CCA3C':
-                    rec_bg = 'red'
-                    label69.configure(bg=rec_bg)
-                    label68.configure(bg=rec_bg)
-                elif rec_bg == 'red':
-                    rec_bg = '#1CCA3C'
-                    label69.configure(bg=rec_bg)
-                    label68.configure(bg=rec_bg)
 
-        cycleH2O = (cycleH2O + 1) % 15
-        if cycleH2O == 0:
+        # global title
+        # global label69
+        # global label68
+        # global rec_bg
+        # if isinstance(title, str):
+        #     if title == 'party time':
+        #         party_time = True
+        #         if rec_bg == '#1CCA3C':
+        #             rec_bg = 'red'
+        #             label69.configure(bg=rec_bg)
+        #             label68.configure(bg=rec_bg)
+        #         elif rec_bg == 'red':
+        #             rec_bg = '#1CCA3C'
+        #             label69.configure(bg=rec_bg)
+        #             label68.configure(bg=rec_bg)
+        # else:
+        #     if title.get() == 'party time':
+        #         party_time = True
+        #         if rec_bg == '#1CCA3C':
+        #             rec_bg = 'red'
+        #             label69.configure(bg=rec_bg)
+        #             label68.configure(bg=rec_bg)
+        #         elif rec_bg == 'red':
+        #             rec_bg = '#1CCA3C'
+        #             label69.configure(bg=rec_bg)
+        #             label68.configure(bg=rec_bg)
+
+        # cycleH2O = (cycleH2O + 1) % 15
+        # if cycleH2O == 0:
+        if datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=30):
             ## create a datetime stamp
             h2otime = datetime.now() - start_time
             manageGraphData.update_h2o_dataList(h2o, h2otime)
 
             #### meecoDrift is how much the interval is drifting from 1 minute ######
-            global intervalH2O
-            meecoDrift = round((h2otime.total_seconds()) / 60, 5) - round((h2otime.total_seconds()) / 60, 0)
-            if round((h2otime.total_seconds()) / 60, 0) != 0.0:
-                if meecoDrift > 0:
-                    intervalH2O -= math.sqrt(meecoDrift) * 400
-                else:
-                    intervalH2O += math.sqrt(meecoDrift * (-1)) * 400
+            # global intervalH2O
+            # meecoDrift = round((h2otime.total_seconds()) / 60, 5) - round((h2otime.total_seconds()) / 60, 0)
+            # if round((h2otime.total_seconds()) / 60, 0) != 0.0:
+            #     if meecoDrift > 0:
+            #         intervalH2O -= math.sqrt(meecoDrift) * 400
+            #     else:
+            #         intervalH2O += math.sqrt(meecoDrift * (-1)) * 400
+            #
+            # if intervalH2O < 2000:
+            #     intervalH2O = 2000
+            # elif intervalH2O > 4000:
+            #     intervalH2O = 4000
 
-            if intervalH2O < 2000:
-                intervalH2O = 2000
-            elif intervalH2O > 4000:
-                intervalH2O = 4000
+            # if party_time == False:
+            #     ani2.event_source.interval = int(intervalH2O)
+            # elif party_time == True:
+            #     ani2.event_source.interval = int(10)
 
-            if party_time == False:
-                ani2.event_source.interval = int(intervalH2O)
-            elif party_time == True:
-                ani2.event_source.interval = int(10)
+            AppContext.last_drawH2otime = datetime.now()
 
-            print("animateh2o " + str(round((h2otime.total_seconds()) / 60, 5)) + " " + str(
-                round((h2otime.total_seconds()) / 60, 0)) + " " + str(ani2.event_source.interval))
+            # print("animateh2o " + str(round((h2otime.total_seconds()) / 60, 5)) + " " + str(
+            #     round((h2otime.total_seconds()) / 60, 0)) + " " + str(ani2.event_source.interval))
             # print(" meeco interval = " + str(ani2.event_source.interval))
 
         ###active graphing
@@ -3049,7 +3055,8 @@ def animateh2o(i):
                 a2.set_ylim(manageGraphData.h2odata_min - 10, manageGraphData.h2odata_max + 10)
             else:
                 a2.set_ylim(0 - 1, manageGraphData.h2odata_max + 10)
-            a2.plot(manageGraphData.h2oxList, manageGraphData.h2oyList, color='#2FA4FF', marker='.', picker=5, linewidth=1)
+            a2.plot(manageGraphData.h2oxList, manageGraphData.h2oyList, color='#2FA4FF', marker='.', picker=5,
+                    linewidth=1)
 
             # COMMENTED OUT 10/8/2020
             # if isinstance(title, str) and isinstance(tool_id, str):
@@ -3075,7 +3082,7 @@ def animateh2o(i):
 
         h2ofileTitle = "H2O"
 
-        if recording == True and var2.get() != 'radO2':
+        if recording and var2.get() != 'radO2':
             global h2oValuelist
             h2oValuelist = []
             with open(os.path.join(pathF, h2ofileTitle) + '.csv', 'w+', newline='') as h:
@@ -3122,8 +3129,11 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         if var2.get() != 'radH2O':
             o2_value = SerialInterface.get_valid_o2(3)
             currento2.set(o2_value)
-            o2 = 999 if o2_value == "N/A" else o2_value
-            if recording and o2_value == "N/A" and cycleO2 == 14:
+            if o2_value == "N/A":
+                o2 = 999
+            else:
+                o2 = o2_value
+            if recording and o2_value == "N/A" and SerialInterface.try_failedO2 == 10:
                 print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDELTAF WAS DISCONNECTED DURING TESTING. PLEASE RESTART "
                       "TGVIEW\n\n\n\n\n")
                 disconnect('disconnect')
@@ -3132,7 +3142,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             o2 = 9999
         print(f"get_valid_o2 - {o2} - {SerialInterface.deltafConnected}")
 
-        # o2 = 0 if o2 < 0 else o2
+        o2 = 0 if o2 < 0 else o2
         if SerialInterface.deltafConnected:
             testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
@@ -3140,32 +3150,32 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             testingStatusMessageDeltaf.set("Check DeltaF Connection")
             o2 = 0
 
-
-
         if not manageGraphData.update_o2_values(o2):
             return
 
-        cycleO2 = (cycleO2 + 1) % 15
-        if cycleO2 == 0:
+        # cycleO2 = (cycleO2 + 1) % 15
+        # if cycleO2 == 0:
+        if datetime.now() - AppContext.last_drawO2time > timedelta(seconds=30):
             o2time = datetime.now() - start_time
             manageGraphData.update_o2_dataList(o2, o2time)
-            deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
+            # deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
             ############################
-            global intervalO2
-            if round((o2time.total_seconds()) / 60, 0) != 0.0:
-                if deltaDrift > 0:
-                    intervalO2 -= math.sqrt(deltaDrift) * 400
-                else:
-                    intervalO2 += math.sqrt(deltaDrift * (-1)) * 400
+            # global intervalO2
+            # if round((o2time.total_seconds()) / 60, 0) != 0.0:
+            #     if deltaDrift > 0:
+            #         intervalO2 -= math.sqrt(deltaDrift) * 400
+            #     else:
+            #         intervalO2 += math.sqrt(deltaDrift * (-1)) * 400
+            #
+            # if intervalO2 < 2000:
+            #     intervalO2 = 2000
+            # elif intervalO2 > 4000:
+            #     intervalO2 = 4000
+            # ani1.event_source.interval = int(intervalO2)
+            AppContext.last_drawO2time = datetime.now()
 
-            if intervalO2 < 2000:
-                intervalO2 = 2000
-            elif intervalO2 > 4000:
-                intervalO2 = 4000
-            ani1.event_source.interval = int(intervalO2)
-
-            print("animateo2 " + str(round((o2time.total_seconds()) / 60, 5)) + " " + str(
-                round((o2time.total_seconds()) / 60, 0)) + " " + str(ani1.event_source.interval))
+            # print("animateo2 " + str(round((o2time.total_seconds()) / 60, 5)) + " " + str(
+            #     round((o2time.total_seconds()) / 60, 0)) + " " + str(ani1.event_source.interval))
 
             ###active graphing
             global title
@@ -3183,7 +3193,8 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 else:
                     a1.set_ylim(0 - 1, manageGraphData.o2data_max + 10)
                 a1.set_xlim([0, max(1, o2xMax)])
-                a1.plot(manageGraphData.o2xList, manageGraphData.o2yList, color='#60D500', marker=markerStyle, linewidth=1)
+                a1.plot(manageGraphData.o2xList, manageGraphData.o2yList, color='#60D500', marker=markerStyle,
+                        linewidth=1)
 
                 a1.set_xlabel("Time (minutes)", color='w')
                 a1.set_ylabel("Oxygen (PPB)", color='w')
@@ -3225,7 +3236,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             img_o2.configure(image=img2)
             img_o2.image = img2
             # replace_objects(img_o2, img_h2o, var2.get(), labelO2, labelO2_value, labelH2O, labelH2O_value)
-
         except FileNotFoundError:
             pass
 

@@ -2,6 +2,7 @@ import binascii
 import random
 import time
 import serial
+from datetime import datetime, timedelta
 
 from modules.Util import raw_to_ppb, IEEE754
 
@@ -12,6 +13,10 @@ class SerialInterface:
     meecoConnected = False
     comPortMoist = ""
     demoMode = True
+    last_getO2time = None
+    last_getH2Otime = None
+    try_failedO2 = 0
+    try_failedH2O = 0
 
     def __init__(self):
         pass
@@ -183,14 +188,19 @@ class SerialInterface:
         while attempts < try_count:
             str_o2 = cls.get_O2()  #### comment out for random data###
             if SerialInterface.demoMode:
+                cls.last_getO2time = datetime.now()
+                cls.try_failedO2 = 0
                 return round(float(random.random() * 100), 1)
             if str_o2 == 'err':
                 # not demo mode and error string
                 attempts += 1
                 continue
             else:
+                cls.last_getO2time = datetime.now()
+                cls.try_failedO2 = 0
                 return round(float(str_o2), 1)
         ##############
+        cls.try_failedO2 = cls.try_failedO2 + 1
         print('attempt FAILED for O2')
         return 'N/A'
 
@@ -201,6 +211,8 @@ class SerialInterface:
         while attempts < try_count:
             str_h2o = cls.get_h20()  #### comment out for random data###
             if SerialInterface.demoMode:
+                cls.last_getH2Otime = datetime.now()
+                cls.try_failedH2O = 0
                 return round(float(random.random() * 100), 1)
             if str_h2o == 'err':
                 # not demo mode and error string
@@ -209,12 +221,15 @@ class SerialInterface:
             else:
                 try:
                     h2o = raw_to_ppb(str_h2o)
+                    cls.last_getH2Otime = datetime.now()
+                    cls.try_failedH2O = 0
                     return round(float(h2o), 1)
                 except:
                     attempts += 1
 
         ##############
         print('attempt FAILED for h2o')
+        cls.try_failedH2O = cls.try_failedH2O + 1
         return 'N/A'
 
     @classmethod
