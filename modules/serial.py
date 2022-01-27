@@ -190,7 +190,7 @@ class SerialInterface:
             if SerialInterface.demoMode:
                 cls.last_getO2time = datetime.now()
                 cls.try_failedO2 = 0
-                return round(float(random.random() * 100), 1)
+                return round(float(random.random() * 10), 1)
             if str_o2 == 'err':
                 # not demo mode and error string
                 attempts += 1
@@ -213,7 +213,7 @@ class SerialInterface:
             if SerialInterface.demoMode:
                 cls.last_getH2Otime = datetime.now()
                 cls.try_failedH2O = 0
-                return round(float(random.random() * 100), 1)
+                return round(float(random.random() * 10), 1)
             if str_h2o == 'err':
                 # not demo mode and error string
                 attempts += 1

@@ -7,7 +7,7 @@ from component.PopupWindow import PopupWindow
 from component.disconnect import disconnect
 from modules.AdjustFigure import AdjustFigure
 from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
-from modules.context import AppContext
+from modules.context import AppContext, TestContext
 from modules.serial import SerialInterface
 
 matplotlib.use("TkAgg")
@@ -1043,14 +1043,14 @@ class PageOne(tk.Frame):
             testingStatusMessageMeeco.set('')
             testingStatusMessageDeltaf.set('')
         elif SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == False:
-            testingStatusMessageMeeco.set("Check Tracer 2 Connection")
+            testingStatusMessageMeeco.set("Check Connection")
             testingStatusMessageDeltaf.set('')
         elif SerialInterface.deltafConnected == False and SerialInterface.meecoConnected == True:
-            testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            testingStatusMessageDeltaf.set("Check Connection")
             testingStatusMessageMeeco.set("")
         else:
-            testingStatusMessageMeeco.set("Check Tracer 2 Connection")
-            testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            testingStatusMessageMeeco.set("Check Connection")
+            testingStatusMessageDeltaf.set("Check Connection")
 
         label = tk.Label(self, textvariable=testingStatusMessageDeltaf, font=("Helvetica", 38, 'bold'), wraplength=500,
                          justify="center")
@@ -1063,9 +1063,9 @@ class PageOne(tk.Frame):
         label.place(x=1520, y=825)  # (x=1220,y=60)
 
         self.configure(background="grey25")
-        global start_timet
-        start_timet = StringVar(value='0')
-        start_timet.set(start_time.strftime("%I:%M %p"))
+
+        TestContext.test_startTime = StringVar(value='0')
+        TestContext.test_startTime.set(datetime.now().strftime("%I:%M %p"))
 
         global start_timeRec
         start_timeRec = StringVar(value='0')
@@ -1121,7 +1121,7 @@ class PageOne(tk.Frame):
 
         def stopTest_andshowStartPage():
             controller.show_frame(StartPage)
-            if 'o2Valuelist' in globals() or 'h2oValuelist' in globals():
+            if len(AppContext.o2Valuelist) > 0 or len(AppContext.h2oValuelist) > 0:
                 self.stop()
 
         padx = 630
@@ -1182,7 +1182,7 @@ class PageOne(tk.Frame):
         self.label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
         self.label_time.config(bg="grey35", fg="white")
 
-        self.label_time_value = tk.Label(self, textvariable=start_timet, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
+        self.label_time_value = tk.Label(self, textvariable=TestContext.test_startTime, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
         self.label_time_value.place(x=labels_axis['label_time_value_x'], y=labels_axis['label_time_value_y'])
 
         # Start Date Display
@@ -1243,7 +1243,6 @@ class PageOne(tk.Frame):
 
         # self.button3.config(state=DISABLED)
         # self.button2.config(state=NORMAL)
-
         global a1, a2
         a1.cla()
         a2.cla()
@@ -1264,53 +1263,48 @@ class PageOne(tk.Frame):
         time_elapsed = time_elapsed_string(time_elapsed)
 
         if var2.get() != 'radH2O':
-            global o2MeanValue
-            o2MeanValue = str(round(mean(AppContext.o2Valuelist), 1))
-            global o2MeanValueVar
-            o2MeanValueVar = StringVar(value=o2MeanValue)
-            global o2MaxValue
-            o2MaxValue = str(max(AppContext.o2Valuelist))
-            global o2MaxValueVar
-            o2MaxValueVar = StringVar(value=o2MaxValue)
-            global o2FinalValue
-            o2FinalValue = str(AppContext.o2Valuelist[-1])
-            global o2FinalValueVar
-            o2FinalValueVar = StringVar(value=o2FinalValue)
+            if len(AppContext.o2Valuelist) > 0:
+                AppContext.o2MeanValue = str(round(mean(AppContext.o2Valuelist), 1))
+                AppContext.o2MeanValueVar = StringVar(value=AppContext.o2MeanValue)
+                AppContext.o2MaxValue = str(max(AppContext.o2Valuelist))
+                AppContext.o2MaxValueVar = StringVar(value=AppContext.o2MaxValue)
+                AppContext.o2FinalValue = str(AppContext.o2Valuelist[-1])
+                AppContext.o2FinalValueVar = StringVar(value=AppContext.o2FinalValue)
 
         if var2.get() != 'radO2':
-            global h2oMeanValue
-            h2oMeanValue = str(round(mean(AppContext.h2oValuelist), 1))
-            global h2oMeanValueVar
-            h2oMeanValueVar = StringVar(value=h2oMeanValue)
-            global h2oMaxValue
-            h2oMaxValue = str(max(AppContext.h2oValuelist))
-            global h2oMaxValueVar
-            h2oMaxValueVar = StringVar(value=h2oMaxValue)
-            global h2oFinalValue
-            h2oFinalValue = str(AppContext.h2oValuelist[-1])
-            global h2oFinalValueVar
-            h2oFinalValueVar = StringVar(value=h2oFinalValue)
+            AppContext.h2oMeanValue = str(round(mean(AppContext.h2oValuelist), 1))
+            AppContext.h2oMeanValueVar = StringVar(value=AppContext.h2oMeanValue)
+
+            AppContext.h2oMaxValue = str(max(AppContext.h2oValuelist))
+            AppContext.h2oMaxValueVar = StringVar(value=AppContext.h2oMaxValue)
+
+            AppContext.h2oFinalValue = str(AppContext.h2oValuelist[-1])
+            AppContext.h2oFinalValueVar = StringVar(value=AppContext.h2oFinalValue)
 
         global path
         directory = dir_TGView
         path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
             header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
         global pathF
-        os.rename(pathF, path)
-        pathF = path
+        try:
+            os.rename(pathF, path)
+            pathF = path
+        except:
+            pass
+
         self.headerFileTitle = "Header"
         # path = directory + '/' + str(title.get())
         with open(os.path.join(pathF, self.headerFileTitle) + '.csv', 'a', newline='') as c:
             writer3 = csv.writer(c)
             writer3.writerow([stop_time])
             if var2.get() != 'radH2O':
-                writer3.writerow([o2MeanValue])
-                writer3.writerow([o2MaxValue])
-                writer3.writerow([o2FinalValue])
+                writer3.writerow([AppContext.o2MeanValue])
+                writer3.writerow([AppContext.o2MaxValue])
+                writer3.writerow([AppContext.o2FinalValue])
             if var2.get() != 'radO2':
-                writer3.writerow([h2oMeanValue])
-                writer3.writerow([h2oMaxValue])
-                writer3.writerow([h2oFinalValue])
+                writer3.writerow([AppContext.h2oMeanValue])
+                writer3.writerow([AppContext.h2oMaxValue])
+                writer3.writerow([AppContext.h2oFinalValue])
             c.close()
 
         with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
@@ -1404,9 +1398,7 @@ def confirm_fields(start_stop):
         global start_timea
         start_timea = start_time.strftime("%H:%M  %m/%d/%y")
 
-        global start_timet
-        # start_timet.set(start_time.strftime("%I:%M %p  %-m/%-d/%y"))
-        start_timet.set(start_time.strftime("%I:%M %p"))
+        TestContext.test_startTime.set(datetime.now().strftime("%I:%M %p"))
 
         ##### global variable resets #######
         manageGraphData.o2data_string = ''
@@ -1620,7 +1612,6 @@ def confirm_fields(start_stop):
             shutil.rmtree(folder)  # "folder" path is selected by user
             top.destroy()
 
-        top46.destroy()
         top4.destroy()
         '''                             ### possible "are you sure" window for delete test button ####
             result = messagebox.askquestion("Delete", "Are You Sure?", icon='warning')
@@ -1823,13 +1814,13 @@ def confirm_fields(start_stop):
                 writer3.writerow([start_time])
                 writer3.writerow([stop_time])
                 if var2.get() != 'radH2O':
-                    writer3.writerow([o2MeanValue])
-                    writer3.writerow([o2MaxValue])
-                    writer3.writerow([o2FinalValue])
+                    writer3.writerow([AppContext.o2MeanValue])
+                    writer3.writerow([AppContext.o2MaxValue])
+                    writer3.writerow([AppContext.o2FinalValue])
                 if var2.get() != 'radO2':
-                    writer3.writerow([h2oMeanValue])
-                    writer3.writerow([h2oMaxValue])
-                    writer3.writerow([h2oFinalValue])
+                    writer3.writerow([AppContext.h2oMeanValue])
+                    writer3.writerow([AppContext.h2oMaxValue])
+                    writer3.writerow([AppContext.h2oFinalValue])
             c.flush()
             c.close()
 
@@ -2297,8 +2288,6 @@ def confirm_fields(start_stop):
     tracer_spec = top4.tracer_spec
     i = i + 1
 
-    global o2MeanValueVar
-    global o2FinalValueVar
     global time_elapsed
     global O2csvFound, H2OcsvFound, BothcsvFound
     global time_elapsedO2
@@ -2328,16 +2317,16 @@ def confirm_fields(start_stop):
                 try:
                     header_list[21]
                 except:
-                    h2oMeanValueVar = StringVar(value=h2obAvgUnedit)
+                    AppContext.h2oMeanValueVar = StringVar(value=h2obAvgUnedit)
                 else:
-                    h2oMeanValueVar = StringVar(value=header_list[21])
-                label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
+                    AppContext.h2oMeanValueVar = StringVar(value=header_list[21])
+                label14 = tk.Label(top4, textvariable=AppContext.h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
             if h2obAvgEdit_exists == False and start_stop == 'stop':
-                h2oMeanValueVar = StringVar(value=h2oMeanValue)
-                label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
+                AppContext.h2oMeanValueVar = StringVar(value=AppContext.h2oMeanValue)
+                label14 = tk.Label(top4, textvariable=AppContext.h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
@@ -2363,16 +2352,16 @@ def confirm_fields(start_stop):
                 try:
                     header_list[23]
                 except:
-                    h2oFinalValueVar = StringVar(value=h2obFinalUnedit)
+                    AppContext.h2oFinalValueVar = StringVar(value=h2obFinalUnedit)
                 else:
-                    h2oFinalValueVar = StringVar(value=header_list[23])
-                label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
+                    AppContext.h2oFinalValueVar = StringVar(value=header_list[23])
+                label14 = tk.Label(top4, textvariable=AppContext.h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
             if h2obFinalEdit_exists == False and start_stop == 'stop':
-                h2oFinalValueVar = StringVar(value=h2oFinalValue)
-                label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
+                AppContext.h2oFinalValueVar = StringVar(value=AppContext.h2oFinalValue)
+                label14 = tk.Label(top4, textvariable=AppContext.h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
@@ -2408,8 +2397,7 @@ def confirm_fields(start_stop):
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
             if o2bAvgEdit_exists == False and start_stop == 'stop':
-                global o2MeanValueVar
-                label14 = tk.Label(top4, textvariable=o2MeanValueVar, width=17, bg="grey35", fg="white",
+                label14 = tk.Label(top4, textvariable=AppContext.o2MeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
@@ -2443,8 +2431,7 @@ def confirm_fields(start_stop):
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
             if o2bFinalEdit_exists == False and start_stop == 'stop':
-                global o2FinalValueVar
-                label14 = tk.Label(top4, textvariable=o2FinalValueVar, width=17, bg="grey35", fg="white",
+                label14 = tk.Label(top4, textvariable=AppContext.o2FinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
@@ -2571,19 +2558,19 @@ def confirm_fields(start_stop):
                     if O2csvFound == False:
                         header_list[20]
                 except:
-                    h2oMeanValueVar = StringVar(value=h2obAvgUnedit)
+                    AppContext.h2oMeanValueVar = StringVar(value=h2obAvgUnedit)
                 else:
                     if O2csvFound == True:
-                        h2oMeanValueVar = StringVar(value=header_list[23])
+                        AppContext.h2oMeanValueVar = StringVar(value=header_list[23])
                     if O2csvFound == False:
-                        h2oMeanValueVar = StringVar(value=header_list[20])
-                label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
+                        AppContext.h2oMeanValueVar = StringVar(value=header_list[20])
+                label14 = tk.Label(top4, textvariable=AppContext.h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
             if h2obAvgEdit_exists == False and start_stop == 'stop':
-                h2oMeanValueVar = StringVar(value=h2oMeanValue)
-                label14 = tk.Label(top4, textvariable=h2oMeanValueVar, width=17, bg="grey35", fg="white",
+                AppContext.h2oMeanValueVar = StringVar(value=AppContext.h2oMeanValue)
+                label14 = tk.Label(top4, textvariable=AppContext.h2oMeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
@@ -2612,19 +2599,19 @@ def confirm_fields(start_stop):
                     if O2csvFound == False:
                         header_list[22]
                 except:
-                    h2oFinalValueVar = StringVar(value=h2obFinalUnedit)
+                    AppContext.h2oFinalValueVar = StringVar(value=h2obFinalUnedit)
                 else:
                     if O2csvFound == True:
-                        h2oFinalValueVar = StringVar(value=header_list[25])
+                        AppContext.h2oFinalValueVar = StringVar(value=header_list[25])
                     if O2csvFound == False:
-                        h2oFinalValueVar = StringVar(value=header_list[22])
-                label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
+                        AppContext.h2oFinalValueVar = StringVar(value=header_list[22])
+                label14 = tk.Label(top4, textvariable=AppContext.h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
             if h2obFinalEdit_exists == False and start_stop == 'stop':
-                h2oFinalValueVar = StringVar(value=h2oFinalValue)
-                label14 = tk.Label(top4, textvariable=h2oFinalValueVar, width=17, bg="grey35", fg="white",
+                AppContext.h2oFinalValueVar = StringVar(value=AppContext.h2oFinalValue)
+                label14 = tk.Label(top4, textvariable=AppContext.h2oFinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i = i - 1.05
@@ -2668,7 +2655,7 @@ def confirm_fields(start_stop):
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
             if o2bAvgEdit_exists == False and start_stop == 'stop':
-                label14 = tk.Label(top4, textvariable=o2MeanValueVar, width=17, bg="grey35", fg="white",
+                label14 = tk.Label(top4, textvariable=AppContext.o2MeanValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=160 + paddy * i + yfield)
                 i = i + 1.05
@@ -2708,7 +2695,7 @@ def confirm_fields(start_stop):
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
             if o2bFinalEdit_exists == False and start_stop == 'stop':
-                label14 = tk.Label(top4, textvariable=o2FinalValueVar, width=17, bg="grey35", fg="white",
+                label14 = tk.Label(top4, textvariable=AppContext.o2FinalValueVar, width=17, bg="grey35", fg="white",
                                    font=SMALL_FONT)
                 label14.place(x=xfield + paddx, y=165 + paddy * i + yfield)
                 i += 1
@@ -2897,7 +2884,7 @@ def animateh2o(i):
             testingStatusMessageMeeco.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('h2o is fucked')
-            testingStatusMessageMeeco.set("Check Tracer 2 Connection")
+            testingStatusMessageMeeco.set("Check Connection")
             h2o = 0
 
         if not manageGraphData.update_h2o_values(h2o):
@@ -3076,7 +3063,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             testingStatusMessageDeltaf.set("Demo Mode" if SerialInterface.demoMode else "")
         else:
             # print('o2 is fucked')
-            testingStatusMessageDeltaf.set("Check DeltaF Connection")
+            testingStatusMessageDeltaf.set("Check Connection")
             o2 = 0
 
         if not manageGraphData.update_o2_values(o2):
@@ -3237,31 +3224,19 @@ def stop_recording():
             everyLine = eachLine.split(",")
             AppContext.h2oValuelist.append(float(everyLine[1]))
 
-    global o2MeanValue
-    o2MeanValue = str(round(mean(AppContext.o2Valuelist), 1))
-    global o2MeanValueVar
-    o2MeanValueVar = StringVar(value=o2MeanValue)
-    global o2MaxValue
-    o2MaxValue = str(max(AppContext.o2Valuelist))
-    global o2MaxValueVar
-    o2MaxValueVar = StringVar(value=o2MaxValue)
-    global o2FinalValue
-    o2FinalValue = str(AppContext.o2Valuelist[-1])
-    global o2FinalValueVar
-    o2FinalValueVar = StringVar(value=o2FinalValue)
+    AppContext.o2MeanValue = str(round(mean(AppContext.o2Valuelist), 1))
+    AppContext.o2MeanValueVar = StringVar(value=AppContext.o2MeanValue)
+    AppContext.o2MaxValue = str(max(AppContext.o2Valuelist))
+    AppContext.o2MaxValueVar = StringVar(value=AppContext.o2MaxValue)
+    AppContext.o2FinalValue = str(AppContext.o2Valuelist[-1])
+    AppContext.o2FinalValueVar = StringVar(value=AppContext.o2FinalValue)
 
-    global h2oMeanValue
-    h2oMeanValue = str(round(mean(AppContext.h2oValuelist), 1))
-    global h2oMeanValueVar
-    h2oMeanValueVar = StringVar(value=h2oMeanValue)
-    global h2oMaxValue
-    h2oMaxValue = str(max(AppContext.h2oValuelist))
-    global h2oMaxValueVar
-    h2oMaxValueVar = StringVar(value=h2oMaxValue)
-    global h2oFinalValue
-    h2oFinalValue = str(AppContext.h2oValuelist[-1])
-    global h2oFinalValueVar
-    h2oFinalValueVar = StringVar(value=h2oFinalValue)
+    AppContext.h2oMeanValue = str(round(mean(AppContext.h2oValuelist), 1))
+    AppContext.h2oMeanValueVar = StringVar(value=AppContext.h2oMeanValue)
+    AppContext.h2oMaxValue = str(max(AppContext.h2oValuelist))
+    AppContext.h2oMaxValueVar = StringVar(value=AppContext.h2oMaxValue)
+    AppContext.h2oFinalValue = str(AppContext.h2oValuelist[-1])
+    AppContext.h2oFinalValueVar = StringVar(value=AppContext.h2oFinalValue)
 
     global start_timea
     start_timea = start_time.strftime("%H:%M  %m/%d/%y")

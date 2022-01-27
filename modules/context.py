@@ -1,6 +1,13 @@
 from datetime import datetime
 
 
+class TestContext:
+    test_startTime = ''
+
+    def __init__(self):
+        directory = ""
+
+
 class AppContext:
     directory = ""
     pathF = ""
@@ -56,6 +63,22 @@ class AppContext:
 
     o2Valuelist = []
     h2oValuelist = []
+
+    o2MeanValue = ''
+    o2MeanValueVar = ''
+    o2MaxValue = ''
+    o2MaxValueVar = ''
+
+    o2FinalValue = ''
+    o2FinalValueVar = ''
+
+    h2oMeanValue = ''
+    h2oMeanValueVar = ''
+    h2oMaxValue = ''
+    h2oMaxValueVar = ''
+
+    h2oFinalValue = ''
+    h2oFinalValueVar = ''
 
     def __init__(self):
         directory = ""
