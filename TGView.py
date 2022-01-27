@@ -50,8 +50,8 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True  ##required for loading certain images
 QAM_GREEN = "#7fa6a3"  ###html color code for QAM green
 
 #### initial animation intervals are adjusted later###
-intervalO2 = 4000
-intervalH2O = 4000
+intervalO2 = 2000
+intervalH2O = 2000
 
 #####GUI
 
@@ -95,9 +95,6 @@ global start_timeez
 start_timeez = start_time.strftime("%m/%d/%y @ %I:%M %p")
 
 ##assign global cycle counts and set to plot the next data grab##
-global cycleO2, cycleH2O
-cycleH2O = 14
-cycleO2 = 14
 
 ## set initial plot min/max to 0/10 (this is adjust based on data being plotted)
 manageGraphData = ManageGraph()
@@ -1268,29 +1265,29 @@ class PageOne(tk.Frame):
 
         if var2.get() != 'radH2O':
             global o2MeanValue
-            o2MeanValue = str(round(mean(o2Valuelist), 1))
+            o2MeanValue = str(round(mean(AppContext.o2Valuelist), 1))
             global o2MeanValueVar
             o2MeanValueVar = StringVar(value=o2MeanValue)
             global o2MaxValue
-            o2MaxValue = str(max(o2Valuelist))
+            o2MaxValue = str(max(AppContext.o2Valuelist))
             global o2MaxValueVar
             o2MaxValueVar = StringVar(value=o2MaxValue)
             global o2FinalValue
-            o2FinalValue = str(o2Valuelist[-1])
+            o2FinalValue = str(AppContext.o2Valuelist[-1])
             global o2FinalValueVar
             o2FinalValueVar = StringVar(value=o2FinalValue)
 
         if var2.get() != 'radO2':
             global h2oMeanValue
-            h2oMeanValue = str(round(mean(h2oValuelist), 1))
+            h2oMeanValue = str(round(mean(AppContext.h2oValuelist), 1))
             global h2oMeanValueVar
             h2oMeanValueVar = StringVar(value=h2oMeanValue)
             global h2oMaxValue
-            h2oMaxValue = str(max(h2oValuelist))
+            h2oMaxValue = str(max(AppContext.h2oValuelist))
             global h2oMaxValueVar
             h2oMaxValueVar = StringVar(value=h2oMaxValue)
             global h2oFinalValue
-            h2oFinalValue = str(h2oValuelist[-1])
+            h2oFinalValue = str(AppContext.h2oValuelist[-1])
             global h2oFinalValueVar
             h2oFinalValueVar = StringVar(value=h2oFinalValue)
 
@@ -1353,59 +1350,7 @@ def delete_confirm():
         "title": "Please Confirm",
         "command_yes": delete_test
     }
-
     confirm_delete = PopupWindow(params)
-
-    # confirmFont = "lato"
-    #
-    # paddx = 15
-    # paddy = 15
-    # global top46
-    # top46 = Toplevel()
-    # # topA.attributes('-type', 'Dock')
-    # top46.title("Please Confirm")
-    # top46.configure(background="grey25")
-    # # Width and height for the Tk root window
-    # w = 720
-    # h = 465
-    # # This gets the current screen width and height
-    # ws = top46.winfo_screenwidth()
-    # hs = top46.winfo_screenheight()
-    # # Calculate the x and y coordinates based on the current screen size
-    # sx = (ws / 2) - (w / 2)
-    # sy = (hs / 2) - (h / 2)
-    # # Open the root window in the middle of the screen
-    # # topA.overrideredirect(True)
-    # top46.geometry('%dx%d+%d+%d' % (w, h, sx, sy))
-    # paddy = 5
-    #
-    # ##### Ask the question
-    # label4 = tk.Label(top46, text="Are you sure you want to delete this report?", bg="grey25", fg='white',
-    #                   font=(confirmFont, 40, 'bold'), wraplength=550)
-    # label4.place(relx=.5, rely=.27, anchor="center")
-    #
-    # ##### equipment controls title
-    # label1 = tk.Label(top46, text="(This will delete the folder and all testing data)", bg="grey25", fg='orange',
-    #                   font=(confirmFont, 17, 'bold'))
-    # label1.place(relx=.5, rely=.52, anchor="center")
-    #
-    # # label2 = tk.Label(top45, text=version_num,bg="grey25", fg = "white", font=(confirmFont,40,'bold'))
-    # # label2.place(relx=.5, rely=.56, anchor="center")
-    #
-    # ## Button image
-    # # likeIcon = ImageTk.PhotoImage(file = r"./like.png", master=top45)
-    #
-    # # YES button
-    # button1 = tk.Button(top46, text="Yes", compound="left", padx=30, activebackground="#678277", bg="grey35",
-    #                     highlightbackground="#678277", highlightthickness=2, relief="flat", activeforeground="white",
-    #                     fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=delete_test)
-    # button1.place(width=270, height=95, relx=.3, rely=.77, anchor="center")
-    #
-    # # NO button
-    # button2 = tk.Button(top46, text="No", compound="left", padx=30, activebackground="IndianRed", bg="grey35",
-    #                     highlightbackground="IndianRed", highlightthickness=2, relief="flat", activeforeground="white",
-    #                     fg="White", font=(confirmFont, 37, 'bold'), borderwidth='1', command=top46.destroy)
-    # button2.place(width=270, height=95, relx=.7, rely=.77, anchor="center")
 
 
 def confirm_fields(start_stop):
@@ -1464,11 +1409,6 @@ def confirm_fields(start_stop):
         start_timet.set(start_time.strftime("%I:%M %p"))
 
         ##### global variable resets #######
-        global a1, a2
-        global cycleO2, cycleH2O
-
-        cycleH2O = 14
-        cycleO2 = 14
         manageGraphData.o2data_string = ''
         manageGraphData.h2odata_string = ''
         a1.cla()
@@ -1535,10 +1475,6 @@ def confirm_fields(start_stop):
         a2.clear()
 
         # plot the next data grab#
-        global cycleO2, cycleH2O
-        cycleH2O = 14
-        cycleO2 = 14
-
         # graph data reset#
         manageGraphData.o2data_string = ''
         manageGraphData.h2odata_string = ''
@@ -1717,10 +1653,6 @@ def confirm_fields(start_stop):
         start_time = datetime.now()
 
         # plot the next data grab#
-        global cycleO2, cycleH2O
-        cycleH2O = 14
-        cycleO2 = 14
-
         # --------------------------------------#
         #       Updates header.csv             #
         # --------------------------------------#
@@ -3083,14 +3015,13 @@ def animateh2o(i):
         h2ofileTitle = "H2O"
 
         if recording and var2.get() != 'radO2':
-            global h2oValuelist
-            h2oValuelist = []
+            AppContext.h2oValuelist = []
             with open(os.path.join(pathF, h2ofileTitle) + '.csv', 'w+', newline='') as h:
                 writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
                 for eachLine in manageGraphData.h2odataList:
                     writer2.writerow([eachLine])
                     everyLine = eachLine.split(",")
-                    h2oValuelist.append(float(everyLine[1]))
+                    AppContext.h2oValuelist.append(float(everyLine[1]))
 
                 h.flush()
         try:
@@ -3124,7 +3055,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
     # try:
     def o2dataGrab():
         #### data gathering for o2 graph
-        global cycleO2
         o2 = 0
         if var2.get() != 'radH2O':
             o2_value = SerialInterface.get_valid_o2(3)
@@ -3152,8 +3082,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         if not manageGraphData.update_o2_values(o2):
             return
 
-        # cycleO2 = (cycleO2 + 1) % 15
-        # if cycleO2 == 0:
         if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=30):
             o2time = datetime.now() - start_time
             manageGraphData.update_o2_dataList(o2, o2time)
@@ -3209,14 +3137,13 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             o2fileTitle = "O2"
 
             if recording == True and var2.get() != 'radH2O':
-                global o2Valuelist
-                o2Valuelist = []
+                AppContext.o2Valuelist = []
                 with open(os.path.join(pathF, o2fileTitle) + '.csv', 'w+', newline='') as o:
                     writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
                     for eachLine in manageGraphData.o2dataList:
                         writer1.writerow([eachLine])
                         everyLine = eachLine.split(",")
-                        o2Valuelist.append(float(everyLine[1]))
+                        AppContext.o2Valuelist.append(float(everyLine[1]))
                     # print(o2Valuelist)
 
                     o.flush()
@@ -3291,50 +3218,48 @@ def stop_recording():
         writer3.writerow([header_list[16]])
         c.flush()
 
-    global o2Valuelist
     o2fileTitle = "O2"
-    o2Valuelist = []
+    AppContext.o2Valuelist = []
     with open(os.path.join(path, o2fileTitle) + '.csv', 'w+', newline='') as o:
         writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
         for eachLine in manageGraphData.o2dataList:
             writer1.writerow([eachLine])
             everyLine = eachLine.split(",")
-            o2Valuelist.append(float(everyLine[1]))
+            AppContext.o2Valuelist.append(float(everyLine[1]))
 
         o.flush()
-    global h2oValuelist
     h2ofileTitle = "H2O"
-    h2oValuelist = []
+    AppContext.h2oValuelist = []
     with open(os.path.join(path, h2ofileTitle) + '.csv', 'w+', newline='') as h:
         writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
         for eachLine in manageGraphData.h2odataList:
             writer2.writerow([eachLine])
             everyLine = eachLine.split(",")
-            h2oValuelist.append(float(everyLine[1]))
+            AppContext.h2oValuelist.append(float(everyLine[1]))
 
     global o2MeanValue
-    o2MeanValue = str(round(mean(o2Valuelist), 1))
+    o2MeanValue = str(round(mean(AppContext.o2Valuelist), 1))
     global o2MeanValueVar
     o2MeanValueVar = StringVar(value=o2MeanValue)
     global o2MaxValue
-    o2MaxValue = str(max(o2Valuelist))
+    o2MaxValue = str(max(AppContext.o2Valuelist))
     global o2MaxValueVar
     o2MaxValueVar = StringVar(value=o2MaxValue)
     global o2FinalValue
-    o2FinalValue = str(o2Valuelist[-1])
+    o2FinalValue = str(AppContext.o2Valuelist[-1])
     global o2FinalValueVar
     o2FinalValueVar = StringVar(value=o2FinalValue)
 
     global h2oMeanValue
-    h2oMeanValue = str(round(mean(h2oValuelist), 1))
+    h2oMeanValue = str(round(mean(AppContext.h2oValuelist), 1))
     global h2oMeanValueVar
     h2oMeanValueVar = StringVar(value=h2oMeanValue)
     global h2oMaxValue
-    h2oMaxValue = str(max(h2oValuelist))
+    h2oMaxValue = str(max(AppContext.h2oValuelist))
     global h2oMaxValueVar
     h2oMaxValueVar = StringVar(value=h2oMaxValue)
     global h2oFinalValue
-    h2oFinalValue = str(h2oValuelist[-1])
+    h2oFinalValue = str(AppContext.h2oValuelist[-1])
     global h2oFinalValueVar
     h2oFinalValueVar = StringVar(value=h2oFinalValue)
 

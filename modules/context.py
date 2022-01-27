@@ -54,6 +54,8 @@ class AppContext:
     last_drawO2time = None
     last_drawH2otime = None
 
+    o2Valuelist = []
+    h2oValuelist = []
 
     def __init__(self):
         directory = ""
