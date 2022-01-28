@@ -1,4 +1,5 @@
 from datetime import datetime
+from tkinter import StringVar
 
 
 class TestContext:
@@ -79,6 +80,9 @@ class AppContext:
 
     h2oFinalValue = ''
     h2oFinalValueVar = ''
+
+    currento2 = None
+    currenth2o = None
 
     def __init__(self):
         directory = ""

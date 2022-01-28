@@ -402,6 +402,7 @@ class StartPage(tk.Frame):
         mx = 22.8
         m = 2.4
 
+        buttonConfig = AdjustFigure.start_page_buttons()
         ### StartPage buttons
         button1 = tk.Button(self, text="X", compound="left", activebackground="#c98256", bg="grey35",
                             highlightbackground="#A26239", highlightthickness=7, relief="flat",
@@ -410,33 +411,33 @@ class StartPage(tk.Frame):
         button1.place(width=105, height=105, x=1785, y=30)  # (x=padx+pax,y=pay+26)
         # button1.image = aboutIcon (image=aboutIcon,)
 
-        button1 = tk.Button(self, text="Modify Report", image=modifyIcon, compound="left", padx=40,
+        button1 = tk.Button(self, text="Modify Report", image=modifyIcon, compound="left",
                             activebackground="orange", bg="grey35", highlightbackground="orange", highlightthickness=2,
                             relief=FLAT, activeforeground="white", fg="White", font=('calibri', 32, 'bold'),
                             borderwidth='1', command=manage_pdf)
-        button1.place(width=445, height=105, x=970, y=pady * m + pay)  # (x=padx+pax,y=pady*m+pay)
+        button1.place(width=445, height=105, x=buttonConfig['modify_report']['x'], y=pady * m + pay)  # (x=padx+pax,y=pady*m+pay)
         button1.image = modifyIcon
 
-        button1 = tk.Button(self, text="About", image=aboutIcon, compound="left", padx=30, activebackground=QAM_GREEN,
+        button1 = tk.Button(self, text="About", image=aboutIcon, compound="left", activebackground=QAM_GREEN,
                             bg="grey35", highlightbackground="#678277", highlightthickness=7, relief="flat",
                             activeforeground="white", fg="White", font=('calibri', 40, 'bold'), borderwidth='1',
                             command=about_window)  # command=lambda: controller.show_frame(AnalyzerFieldsScreen) or equipment_controls
-        button1.place(width=300, height=105, x=1450, y=30)  # (x=padx+pax,y=pay+26)
+        button1.place(width=300, height=105, x=buttonConfig['about']['x'], y=30)  # (x=padx+pax,y=pay+26)
         button1.image = aboutIcon
 
-        button1 = tk.Button(self, text="Save Graph/s", image=saveIcon, compound="left", padx=55,
+        button1 = tk.Button(self, text="Save Graph/s", image=saveIcon, compound="left",
                             activebackground="#00CD66", bg="grey35", highlightbackground="#00CD66",
                             highlightthickness=2, relief="flat", activeforeground="white", fg="White",
                             font=('calibri', 32, 'bold'), borderwidth='1', command=stop_recording)
-        button1.place(width=445, height=105, x=495, y=pady * m + pay)  # (x=padx*mx+pax,y=pady+pay)
+        button1.place(width=445, height=105, x=buttonConfig['save_graph']['x'], y=pady * m + pay)  # (x=padx*mx+pax,y=pady+pay)
         button1.image = saveIcon
 
-        button1 = tk.Button(self, text="Change Settings", image=settingsIcon, compound="left", padx=35,
+        button1 = tk.Button(self, text="Change Settings", image=settingsIcon, compound="left",
                             activebackground="#2FA4FF", bg="grey35", highlightbackground="#2FA4FF",
                             highlightthickness=2, relief="flat", activeforeground="white", fg="White",
                             font=('calibri', 32, 'bold'), borderwidth='1',
                             command=equipment_controls)  ## command=lambda: controller.show_frame(AnalyzerFieldsScreen)  borderwidth = '1',relief="flat",    #command=equipment_controls
-        button1.place(width=445, height=105, x=1445, y=pady * m + pay)  # (x=padx*mx+pax,y=pady*m+pay)
+        button1.place(width=450, height=105, x=buttonConfig['change_settings']['x'], y=pady * m + pay)  # (x=padx*mx+pax,y=pady*m+pay)
         button1.image = settingsIcon
 
         def startTest_andshowPageOne():
@@ -445,20 +446,14 @@ class StartPage(tk.Frame):
 
         # Start test and show PageOne
         button1 = tk.Button(self, text="Begin Testing", activebackground="firebrick1", image=beginIcon, compound="left",
-                            padx=55, bg="grey35", highlightbackground="firebrick1", highlightthickness=2, relief="flat",
+                            bg="grey35", highlightbackground="firebrick1", highlightthickness=2, relief="flat",
                             activeforeground="white", fg="White", font=('calibri', 32, 'bold'), borderwidth='1',
                             command=startTest_andshowPageOne)
-        button1.place(width=445, height=105, x=20,
+        button1.place(width=445, height=105, x=25,
                       y=pady * m + pay)  # y=pady+pay x=20+pax      #old wxh width = 19, height = 2,
         button1.image = beginIcon
 
         ###### StartPage Current Data Readings
-        pax = 400
-        pay = 600
-        padx = 200
-        pady = 60
-        xfield = 800
-
         # Show Current O2 Reading
         # global labelO2
         o2_position = AdjustFigure.o2_axis()
@@ -466,11 +461,10 @@ class StartPage(tk.Frame):
         self.labelO2.place(x=o2_position['label_x'], y=o2_position['label_y'])
         self.labelO2.config(bg="grey35", fg="white")
         #
-        global currento2
-        currento2 = StringVar(value=0)
+        AppContext.currento2 = StringVar(value=0)
         # fg="#00CD66"
         # global labelO2_value
-        self.labelO2_value = tk.Label(self, textvariable=currento2, width=6, bg="grey35", fg="#60D500",
+        self.labelO2_value = tk.Label(self, textvariable=AppContext.currento2, width=6, bg="grey35", fg="#60D500",
                                       font=('calibri', 20, 'bold'))
         self.labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
 
@@ -481,11 +475,8 @@ class StartPage(tk.Frame):
         self.labelH2O.place(x=h2o_position['label_x'], y=h2o_position['label_y'])
         self.labelH2O.config(bg="grey35", fg="white")
 
-        global currenth2o
-        currenth2o = StringVar(value=0)
-        if int(currenth2o.get()) < 0:
-            currenth2o = 0
-        self.labelH2O_value = tk.Label(self, textvariable=currenth2o, width=6, bg="grey35", fg="#00BFFF",
+        AppContext.currenth2o = StringVar(value=0)
+        self.labelH2O_value = tk.Label(self, textvariable=AppContext.currenth2o, width=6, bg="grey35", fg="#00BFFF",
                                        font=('calibri', 20, 'bold'))
         self.labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
         self.bind('<<ShowFrame>>', self.on_show_frame)
@@ -507,6 +498,7 @@ class StartPage(tk.Frame):
 
     def on_show_frame(self, event):
         print('Start Page onShowFrame')
+
 
 
 ### valindates input from user (used for writing int/float numbers to meeco... equipment controls)
@@ -1039,13 +1031,13 @@ class PageOne(tk.Frame):
 
         global currentRaw
         currentRaw = StringVar()
-        if SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == True:
+        if SerialInterface.deltafConnected and SerialInterface.meecoConnected:
             testingStatusMessageMeeco.set('')
             testingStatusMessageDeltaf.set('')
-        elif SerialInterface.deltafConnected == True and SerialInterface.meecoConnected == False:
+        elif SerialInterface.deltafConnected and SerialInterface.meecoConnected == False:
             testingStatusMessageMeeco.set("Check Connection")
             testingStatusMessageDeltaf.set('')
-        elif SerialInterface.deltafConnected == False and SerialInterface.meecoConnected == True:
+        elif not SerialInterface.deltafConnected and SerialInterface.meecoConnected:
             testingStatusMessageDeltaf.set("Check Connection")
             testingStatusMessageMeeco.set("")
         else:
@@ -1124,19 +1116,21 @@ class PageOne(tk.Frame):
             if len(AppContext.o2Valuelist) > 0 or len(AppContext.h2oValuelist) > 0:
                 self.stop()
 
-        padx = 630
         pady = 835
 
         # added the stop icon to be used in the Stop recording button
         stopIcon = ImageTk.PhotoImage(file=f"{root_path}/stop1.png", master=self)
 
         # Stop Recording Button => starts the stop() function
+        buttonConfig = AdjustFigure.page_one_buttons()
+
         self.button3 = tk.Button(self, text="Stop Recording Test", activebackground="firebrick1", image=stopIcon,
                                  compound="left", padx=30, bg="grey35", highlightbackground="firebrick1",
                                  highlightthickness=2, relief=FLAT, activeforeground="white", fg="White",
                                  font=('calibri', 32, 'bold'), borderwidth='1',
                                  command=stop_confirm)  # command=stopTest_andshowStartPage
-        self.button3.place(width=930, height=95, x=970, y=pady)
+        self.button3.place(width=buttonConfig['stop_test']['w'], height=buttonConfig['stop_test']['h'],
+                           x=buttonConfig['stop_test']['x'], y=buttonConfig['stop_test']['y'])
         self.button3.image = stopIcon
 
         # added the settings icon to be used in the Equipment controls button
@@ -1147,7 +1141,8 @@ class PageOne(tk.Frame):
                                  highlightthickness=2, relief=FLAT, activeforeground="white", fg="White",
                                  font=('calibri', 32, 'bold'), borderwidth='1', command=equipment_controls)
         # self.button1.place(width=500,height=95,x=450,y=pady)
-        self.button1.place(width=930, height=95, x=20, y=pady)
+        self.button1.place(width=buttonConfig['equip']['w'], height=buttonConfig['equip']['h'],
+                           x=buttonConfig['equip']['x'], y=buttonConfig['equip']['y'])
         self.button1.image = settingsIcon
 
         global rec_bg
@@ -1170,14 +1165,11 @@ class PageOne(tk.Frame):
         '''
 
         ##### TESTING SCREEN DATA
-        padx = 755
-        pady = 685
-        padyy = 715
         testingPadX = 200
         m = 0
         multiplier = 2.3
         # Start Time Display
-        labels_axis = AdjustFigure.test_labels_axis()
+        labels_axis = AdjustFigure.test_labels_axis()['single']
         self.label_time = tk.Label(self, text="Start Time:", font=SMALLER_FONT)
         self.label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
         self.label_time.config(bg="grey35", fg="white")
@@ -1201,7 +1193,7 @@ class PageOne(tk.Frame):
         self.labelO2.place(x=padx + testingPadX * m + 10, y=pady)
         self.labelO2.config(bg="grey35", fg="white")
 
-        self.labelO2_value = tk.Label(self, textvariable=currento2, bg="grey35", fg="#60D500",
+        self.labelO2_value = tk.Label(self, textvariable=AppContext.currento2, bg="grey35", fg="#60D500",
                                       font=('lato', 20, 'bold'))
         self.labelO2_value.place(x=165 + padx + testingPadX * m + 10, y=pady)
         m += multiplier
@@ -1211,7 +1203,7 @@ class PageOne(tk.Frame):
         self.labelH2O.place(x=padx + testingPadX * m + 70, y=pady)
         self.labelH2O.config(bg="grey35", fg="white")
 
-        self.labelH2O_value = tk.Label(self, textvariable=currenth2o, bg="grey35", fg="#2FA4FF",
+        self.labelH2O_value = tk.Label(self, textvariable=AppContext.currenth2o, bg="grey35", fg="#2FA4FF",
                                        font=('lato', 20, 'bold'))
         self.labelH2O_value.place(x=200 + padx + testingPadX * m + 70, y=pady)
 
@@ -1323,7 +1315,8 @@ class PageOne(tk.Frame):
     def on_show_frame(self, event):
         print('onshow frame canvas')
         config_canvas_test(self.canvas1, self.canvas2, var2.get(), self.labelO2, self.labelO2_value, self.labelH2O,
-                           self.labelH2O_value)
+                           self.labelH2O_value, self.label_time,
+                           self.label_time_value, self.label_date, self.label_date_value)
 
 
 #### STOP CONFIRMATION WINDOW
@@ -2868,14 +2861,14 @@ def animateh2o(i):
         h2o = 0
         if var2.get() != 'radO2':
             h2o_value = SerialInterface.get_valid_h2o(3)
-            currenth2o.set(h2o_value)
+            AppContext.currenth2o.set(h2o_value)
             h2o = 999 if h2o_value == "N/A" else h2o_value
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
                 print(
                     "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
                 disconnect('disconnect')
         elif var2.get() == 'radO2':
-            currenth2o.set('N/A')
+            AppContext.currenth2o.set('N/A')
             h2o = 9999
         print(f"get_valid_h2o - {h2o} - {SerialInterface.meecoConnected}")
 
@@ -3045,7 +3038,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         o2 = 0
         if var2.get() != 'radH2O':
             o2_value = SerialInterface.get_valid_o2(3)
-            currento2.set(o2_value)
+            AppContext.currento2.set(o2_value)
             if o2_value == "N/A":
                 o2 = 999
             else:
@@ -3055,7 +3048,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                       "TGVIEW\n\n\n\n\n")
                 disconnect('disconnect')
         elif var2.get() == 'radH2O':
-            currento2.set('N/A')
+            AppContext.currento2.set('N/A')
             o2 = 9999
         print(f"get_valid_o2 - {o2} - {SerialInterface.deltafConnected}")
 

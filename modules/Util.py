@@ -65,17 +65,20 @@ def raw_to_ppb(data):
 
 
 def config_canvas_test(co2, ch2o, option,
-                       lbl_o2, value_o2, lbl_h2o, value_h2o):
+                       lbl_o2, value_o2, lbl_h2o, value_h2o,
+                       label_time, label_time_value,
+                       label_date, label_date_value):
     ext_fig = AdjustFigure.ext_figure_conf()
     default_fig = AdjustFigure.default_figure_conf()
     ext_position = AdjustFigure.image_ext_axis()
     o2_position = AdjustFigure.o2_axis()
     h2o_position = AdjustFigure.ho2_axis()
 
-    extend_width = ext_fig['w'] * ext_fig['dpi']
+    extend_width = ext_fig['w'] * ext_fig['dpi']-1
     extend_height = ext_fig['h'] * ext_fig['dpi']
-    default_width = default_fig['w']*default_fig['dpi']
+    default_width = default_fig['w']*default_fig['dpi']-1
     default_height = default_fig['h']*default_fig['dpi']
+    labels_axis = AdjustFigure.test_labels_axis()['single']
 
     if option == 'radO2':
         co2.get_tk_widget().config(width=extend_width, height=extend_height)
@@ -93,15 +96,23 @@ def config_canvas_test(co2, ch2o, option,
         value_h2o.place(x=ext_position['value_x'], y=ext_position['value_y']-42)
         lbl_o2.place_forget()
         value_o2.place_forget()
+
     else:
-        co2.get_tk_widget().place(x=o2_position['img_x'], y=o2_position['img_y']-40)
-        ch2o.get_tk_widget().place(x=h2o_position['img_x'], y=h2o_position['img_y']-40)
         co2.get_tk_widget().config(width=default_width, height=default_height)
         ch2o.get_tk_widget().config(width=default_width, height=default_height)
+        co2.get_tk_widget().place(x=o2_position['img_x'], y=o2_position['img_y']-40)
+        ch2o.get_tk_widget().place(x=h2o_position['img_x'], y=h2o_position['img_y']-40)
         lbl_o2.place(x=o2_position['label_x'], y=o2_position['label_y']-42)
         value_o2.place(x=o2_position['value_x'], y=o2_position['value_y']-42)
         lbl_h2o.place(x=h2o_position['label_x'], y=h2o_position['label_y']-42)
         value_h2o.place(x=h2o_position['value_x'], y=h2o_position['value_y']-42)
+        labels_axis = AdjustFigure.test_labels_axis()['double']
+    label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
+    label_time_value.place(x=labels_axis['label_time_value_x'], y=labels_axis['label_time_value_y'])
+    # Start Date Display
+    label_date.place(x=labels_axis['label_date_x'], y=labels_axis['label_date_y'])
+    label_date_value.place(x=labels_axis['label_date_value_x'], y=labels_axis['label_date_value_y'])
+
 
 def replace_objects(obj_o2, obj_h2o, option,
                    lbl_o2=None, value_o2=None, lbl_h2o=None, value_h2o=None):
@@ -144,6 +155,7 @@ def replace_objects(obj_o2, obj_h2o, option,
             if lbl_h2o is not None:
                 lbl_h2o.place_forget()
                 value_h2o.place_forget()
+
 
 
 
