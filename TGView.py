@@ -6,7 +6,7 @@ from GlobalConst import *
 from component.PopupWindow import PopupWindow
 from component.disconnect import disconnect
 from modules.AdjustFigure import AdjustFigure
-from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test
+from modules.Util import raw_to_ppb, time_elapsed_string, replace_objects, config_canvas_test, pdf_time
 from modules.context import AppContext, TestContext
 from modules.serial import SerialInterface
 
@@ -89,8 +89,6 @@ recording = False
 
 ## set start_time (this is reset whenever start/stop_recording is clicked)
 start_time = datetime.now()
-global start_timee
-start_timee = start_time.strftime("%m_%d_%y_%H.%M.%S")
 global start_timeez
 start_timeez = start_time.strftime("%m/%d/%y @ %I:%M %p")
 
@@ -331,7 +329,7 @@ class StartPage(tk.Frame):
         tracer_spec = header_list[17]
         ### create initial path (this is only used if the user never starts test)
         global pathstart
-        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + start_timee
+        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + AppContext.test_start_time
 
         ### var2 determines which analyzer is talking
         global var2
@@ -1056,8 +1054,8 @@ class PageOne(tk.Frame):
 
         self.configure(background="grey25")
 
-        TestContext.test_startTime = StringVar(value='0')
-        TestContext.test_startTime.set(datetime.now().strftime("%I:%M %p"))
+        TestContext.test_startTimeLabelValue = StringVar(value='0')
+        TestContext.test_startTimeLabelValue.set(datetime.now().strftime("%I:%M %p"))
 
         global start_timeRec
         start_timeRec = StringVar(value='0')
@@ -1174,7 +1172,7 @@ class PageOne(tk.Frame):
         self.label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
         self.label_time.config(bg="grey35", fg="white")
 
-        self.label_time_value = tk.Label(self, textvariable=TestContext.test_startTime, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
+        self.label_time_value = tk.Label(self, textvariable=TestContext.test_startTimeLabelValue, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
         self.label_time_value.place(x=labels_axis['label_time_value_x'], y=labels_axis['label_time_value_y'])
 
         # Start Date Display
@@ -1245,10 +1243,7 @@ class PageOne(tk.Frame):
 
         global stop_time
         stop_time = datetime.now()
-        global stop_timee
-        stop_timee = stop_time.strftime("%H:%M  %m/%d/%y")
-        global stop_timeet
-        stop_timeet = stop_time.strftime("%m_%d_%y_%H.%M.%S")
+        AppContext.test_stop_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
 
         global time_elapsed
         time_elapsed = stop_time - start_time
@@ -1276,17 +1271,16 @@ class PageOne(tk.Frame):
         global path
         directory = dir_TGView
         path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
-            header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
-        global pathF
+            header_list[2]) + "_" + str(header_list[0]) + "_" + AppContext.test_start_time
         try:
-            os.rename(pathF, path)
-            pathF = path
+            os.rename(AppContext.current_savePath, path)
+            AppContext.current_savePath = path
         except:
             pass
 
         self.headerFileTitle = "Header"
         # path = directory + '/' + str(title.get())
-        with open(os.path.join(pathF, self.headerFileTitle) + '.csv', 'a', newline='') as c:
+        with open(os.path.join(AppContext.current_savePath, self.headerFileTitle) + '.csv', 'a', newline='') as c:
             writer3 = csv.writer(c)
             writer3.writerow([stop_time])
             if var2.get() != 'radH2O':
@@ -1326,7 +1320,6 @@ def stop_confirm():
         "title": "Please Confirm",
         "command_yes": stopTest_andshowStartPage
     }
-
     confirm_window = PopupWindow(params)
 
 
@@ -1369,8 +1362,6 @@ def confirm_fields(start_stop):
 
     top4.configure(background="grey25")
 
-    global pathF
-
     # --------------------------------------------------------------------------------#
     #                                  COMMANDS                                      #
     # --------------------------------------------------------------------------------#
@@ -1386,12 +1377,12 @@ def confirm_fields(start_stop):
 
         global start_time
         start_time = datetime.now()
-        global start_timee
-        start_timee = start_time.strftime("%m_%d_%y_%H.%M.%S")
+
+        AppContext.test_start_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
         global start_timea
         start_timea = start_time.strftime("%H:%M  %m/%d/%y")
 
-        TestContext.test_startTime.set(datetime.now().strftime("%I:%M %p"))
+        TestContext.test_startTimeLabelValue.set(datetime.now().strftime("%I:%M %p"))
 
         ##### global variable resets #######
         manageGraphData.o2data_string = ''
@@ -1400,13 +1391,12 @@ def confirm_fields(start_stop):
         a2.cla()
 
         headerFileTitle = "Header"
-        path = directory + '/' + str(building.get()) + "_" + str(tool_id.get()) + "_" + str(location.get()) + "_" + str(
-            title.get()) + "_" + start_timee
+        AppContext.current_savePath = directory + '/' + building.get() + "_" + str(tool_id.get()) + "_" + str(location.get()) + "_" + str(
+            title.get()) + "_" + AppContext.test_start_time
         i = 0
 
-        os.mkdir(path)
-        global pathF
-        pathF = str(path)
+        os.mkdir(AppContext.current_savePath)
+
 
         header_list[0] = title.get()
         header_list[1] = client.get()
@@ -1428,7 +1418,7 @@ def confirm_fields(start_stop):
         header_list[16] = tracer_flow.get()
         header_list[17] = tracer_spec.get()
 
-        with open(os.path.join(path, headerFileTitle) + '.csv', 'w+', newline='') as c:
+        with open(os.path.join(AppContext.current_savePath, headerFileTitle) + '.csv', 'w+', newline='') as c:
             writer3 = csv.writer(c)
             for row in header_list:
                 writer3.writerow([row])
@@ -1470,8 +1460,7 @@ def confirm_fields(start_stop):
 
         # delete entire test folder#
         if start_stop == 'start' or start_stop == 'stop':
-            global pathF
-            shutil.rmtree(pathF)  # "pathF" path is created from new test
+            shutil.rmtree(AppContext.current_savePath)  # "AppContext.current_savePath" path is created from new test
 
         elif start_stop == 'manage':
             ### variable resets ###
@@ -1679,18 +1668,18 @@ def confirm_fields(start_stop):
         directory = dir_TGView
         if start_stop == 'stop':
             path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
-                header_list[2]) + "_" + str(header_list[0]) + "_" + start_timee
-            global pathF
-            if os.path.exists(path):
-                try:
-                    shutil.rmtree(path)
-                except OSError as e:
-                    print("Error: %s - %s." % (e.filename, e.strerror))
-            os.rename(pathF, path)
-            pathF = path
+                header_list[2]) + "_" + str(header_list[0]) + "_" + AppContext.test_start_time
+
+        #     try:
+        #         shutil.rmtree(path)
+        #     except OSError as e:
+        #         print("Error: %s - %s." % (e.filename, e.strerror))
+            if not os.path.exists(path) and os.path.exists(AppContext.current_savePath):
+                os.rename(AppContext.current_savePath, path)
+                AppContext.current_savePath = path
 
         if start_stop == 'manage':
-            pathF = folder
+            AppContext.current_savePath = folder
 
         ### adjust Header_default with new field names
         with open(f'{root_path}/Header_default.csv', 'w+', newline='') as d:
@@ -1700,7 +1689,7 @@ def confirm_fields(start_stop):
             d.close()
 
         ### adjust newly created header file with new field names (overwrites old header file)
-        with open(os.path.join(pathF, 'Header.csv'), 'w+', newline='') as c:
+        with open(os.path.join(AppContext.current_savePath, 'Header.csv'), 'w+', newline='') as c:
             writer3 = csv.writer(c)
             for row in header_list:
                 writer3.writerow([row])
@@ -2996,7 +2985,7 @@ def animateh2o(i):
 
         if recording and var2.get() != 'radO2':
             AppContext.h2oValuelist = []
-            with open(os.path.join(pathF, h2ofileTitle) + '.csv', 'w+', newline='') as h:
+            with open(os.path.join(AppContext.current_savePath, h2ofileTitle) + '.csv', 'w+', newline='') as h:
                 writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
                 for eachLine in manageGraphData.h2odataList:
                     writer2.writerow([eachLine])
@@ -3118,7 +3107,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
 
             if recording == True and var2.get() != 'radH2O':
                 AppContext.o2Valuelist = []
-                with open(os.path.join(pathF, o2fileTitle) + '.csv', 'w+', newline='') as o:
+                with open(os.path.join(AppContext.current_savePath, o2fileTitle) + '.csv', 'w+', newline='') as o:
                     writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
                     for eachLine in manageGraphData.o2dataList:
                         writer1.writerow([eachLine])
@@ -3155,11 +3144,8 @@ def stop_recording():
     # global testflow_units
     # testflow_units='scfh'
     global stop_time
-    global stop_timeet
-    global stop_timee
     stop_time = datetime.now()
-    stop_timee = stop_time.strftime("%m_%d_%y_%H.%M.%S")
-    stop_timeet = stop_time.strftime("%m_%d_%y_%H.%M.%S")
+    save_graph_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
 
     global time_elapsed
     time_elapsed = stop_time - start_time
@@ -3171,13 +3157,10 @@ def stop_recording():
         header_list = []
         for row in headreader:
             header_list.append(row[0])
-    directory = dir_TGView
-    path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-        header_list[0]) + "_" + stop_timeet
-    global pathF
-    os.mkdir(path)
-    pathF = path
-    with open(os.path.join(path, 'Header') + '.csv', 'w+', newline='') as c:
+    save_path = dir_TGView + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
+        header_list[0]) + "_" + save_graph_time
+    os.mkdir(AppContext.current_savePath)
+    with open(os.path.join(AppContext.current_savePath, 'Header') + '.csv', 'w+', newline='') as c:
         writer3 = csv.writer(c)
         writer3.writerow([header_list[0]])
         writer3.writerow([header_list[1]])
@@ -3200,7 +3183,7 @@ def stop_recording():
 
     o2fileTitle = "O2"
     AppContext.o2Valuelist = []
-    with open(os.path.join(path, o2fileTitle) + '.csv', 'w+', newline='') as o:
+    with open(os.path.join(save_path, o2fileTitle) + '.csv', 'w+', newline='') as o:
         writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
         for eachLine in manageGraphData.o2dataList:
             writer1.writerow([eachLine])
@@ -3210,7 +3193,7 @@ def stop_recording():
         o.flush()
     h2ofileTitle = "H2O"
     AppContext.h2oValuelist = []
-    with open(os.path.join(path, h2ofileTitle) + '.csv', 'w+', newline='') as h:
+    with open(os.path.join(save_path, h2ofileTitle) + '.csv', 'w+', newline='') as h:
         writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
         for eachLine in manageGraphData.h2odataList:
             writer2.writerow([eachLine])
@@ -3230,10 +3213,6 @@ def stop_recording():
     AppContext.h2oMaxValueVar = StringVar(value=AppContext.h2oMaxValue)
     AppContext.h2oFinalValue = str(AppContext.h2oValuelist[-1])
     AppContext.h2oFinalValueVar = StringVar(value=AppContext.h2oFinalValue)
-
-    global start_timea
-    start_timea = start_time.strftime("%H:%M  %m/%d/%y")
-    stop_timee = stop_time.strftime("%H:%M  %m/%d/%y")
 
     confirm_fields(start_stop="stop")
 
@@ -3403,7 +3382,7 @@ def exportH2O(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
         try:
             newTime_durationH2O
@@ -3439,14 +3418,13 @@ def exportH2O(startscreen):
     # This saves the PDF file to the current working folder
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-            header_list[0]) + "_" + stop_timeet + ".pdf"
-        global pathF
+            header_list[0]) + "_" + AppContext.test_stop_time + ".pdf"
     if startt_stopp == 'manage':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
             header_list[0]) + "_" + str(newStopTime.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
-        pathF = folder
+        AppContext.current_savePath = folder
 
-    pdfpath = pathF + '/' + pdfname
+    pdfpath = AppContext.current_savePath + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
     os.chdir(dir_TGView)
@@ -3605,7 +3583,7 @@ def exportO2(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
         global newTime_durationO2
         try:
@@ -3643,14 +3621,13 @@ def exportO2(startscreen):
     # This saves the PDF file to the current working folder
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-            header_list[0]) + "_" + stop_timeet + ".pdf"
-        global pathF
+            header_list[0]) + "_" + AppContext.test_stop_time + ".pdf"
     if startt_stopp == 'manage':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
             header_list[0]) + "_" + str(newStopTimeO2.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
-        pathF = folder
+        AppContext.current_savePath = folder
 
-    pdfpath = pathF + '/' + pdfname
+    pdfpath = AppContext.current_savePath + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
     os.chdir(dir_TGView)
@@ -3965,7 +3942,7 @@ def exportBoth(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
         global newTime_durationO2
         try:
@@ -4090,7 +4067,7 @@ def exportBoth(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
         try:
             global newTime_durationH2O
@@ -4132,14 +4109,13 @@ def exportBoth(startscreen):
     # This saves the PDF file to the current working folder
     if startt_stopp == 'start' or startt_stopp == 'stop':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
-            header_list[0]) + "_" + stop_timeet + ".pdf"
-        global pathF
+            header_list[0]) + "_" + AppContext.test_stop_time + ".pdf"
     if startt_stopp == 'manage':
         pdfname = str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
             header_list[0]) + "_" + str(newStopTime.strftime("%m_%d_%y_%I.%M.%S")) + ".pdf"
-        pathF = folder
+        AppContext.current_savePath = folder
 
-    pdfpath = pathF + '/' + pdfname
+    pdfpath = AppContext.current_savePath + '/' + pdfname
     pdf.output(pdfpath)
     pdf = FPDF(orientation='P', unit='in')
     os.chdir(dir_TGView)

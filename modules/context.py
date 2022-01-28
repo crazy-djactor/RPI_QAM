@@ -3,7 +3,7 @@ from tkinter import StringVar
 
 
 class TestContext:
-    test_startTime = ''
+    test_startTimeLabelValue = ''
 
     def __init__(self):
         directory = ""
@@ -83,6 +83,12 @@ class AppContext:
 
     currento2 = None
     currenth2o = None
+
+    test_stop_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
+    test_start_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
+
+    current_savePath = ''
+    save_path = ''
 
     def __init__(self):
         directory = ""
