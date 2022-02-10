@@ -88,7 +88,9 @@ class AppContext:
     test_start_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
 
     current_savePath = ''
-    save_path = ''
+
+    time_elapsed_string = ''
+    time_elapsed = None
 
     def __init__(self):
         directory = ""

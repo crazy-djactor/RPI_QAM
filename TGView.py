@@ -329,7 +329,8 @@ class StartPage(tk.Frame):
         tracer_spec = header_list[17]
         ### create initial path (this is only used if the user never starts test)
         global pathstart
-        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(title) + "_" + AppContext.test_start_time
+        pathstart = f'{root_path}/TGView/' + str(client) + "_" + str(location) + "_" + str(
+            title) + "_" + AppContext.test_start_time
 
         ### var2 determines which analyzer is talking
         global var2
@@ -413,7 +414,8 @@ class StartPage(tk.Frame):
                             activebackground="orange", bg="grey35", highlightbackground="orange", highlightthickness=2,
                             relief=FLAT, activeforeground="white", fg="White", font=('calibri', 32, 'bold'),
                             borderwidth='1', command=manage_pdf)
-        button1.place(width=445, height=105, x=buttonConfig['modify_report']['x'], y=pady * m + pay)  # (x=padx+pax,y=pady*m+pay)
+        button1.place(width=445, height=105, x=buttonConfig['modify_report']['x'],
+                      y=pady * m + pay)  # (x=padx+pax,y=pady*m+pay)
         button1.image = modifyIcon
 
         button1 = tk.Button(self, text="About", image=aboutIcon, compound="left", activebackground=QAM_GREEN,
@@ -427,7 +429,8 @@ class StartPage(tk.Frame):
                             activebackground="#00CD66", bg="grey35", highlightbackground="#00CD66",
                             highlightthickness=2, relief="flat", activeforeground="white", fg="White",
                             font=('calibri', 32, 'bold'), borderwidth='1', command=stop_recording)
-        button1.place(width=445, height=105, x=buttonConfig['save_graph']['x'], y=pady * m + pay)  # (x=padx*mx+pax,y=pady+pay)
+        button1.place(width=445, height=105, x=buttonConfig['save_graph']['x'],
+                      y=pady * m + pay)  # (x=padx*mx+pax,y=pady+pay)
         button1.image = saveIcon
 
         button1 = tk.Button(self, text="Change Settings", image=settingsIcon, compound="left",
@@ -435,7 +438,8 @@ class StartPage(tk.Frame):
                             highlightthickness=2, relief="flat", activeforeground="white", fg="White",
                             font=('calibri', 32, 'bold'), borderwidth='1',
                             command=equipment_controls)  ## command=lambda: controller.show_frame(AnalyzerFieldsScreen)  borderwidth = '1',relief="flat",    #command=equipment_controls
-        button1.place(width=450, height=105, x=buttonConfig['change_settings']['x'], y=pady * m + pay)  # (x=padx*mx+pax,y=pady*m+pay)
+        button1.place(width=450, height=105, x=buttonConfig['change_settings']['x'],
+                      y=pady * m + pay)  # (x=padx*mx+pax,y=pady*m+pay)
         button1.image = settingsIcon
 
         def startTest_andshowPageOne():
@@ -496,7 +500,6 @@ class StartPage(tk.Frame):
 
     def on_show_frame(self, event):
         print('Start Page onShowFrame')
-
 
 
 ### valindates input from user (used for writing int/float numbers to meeco... equipment controls)
@@ -1170,7 +1173,8 @@ class PageOne(tk.Frame):
         self.label_time.place(x=labels_axis['label_time_x'], y=labels_axis['label_time_y'])
         self.label_time.config(bg="grey35", fg="white")
 
-        self.label_time_value = tk.Label(self, textvariable=TestContext.test_startTimeLabelValue, bg="grey35", fg="#FFA500", font=SMALLER_FONT)
+        self.label_time_value = tk.Label(self, textvariable=TestContext.test_startTimeLabelValue, bg="grey35",
+                                         fg="#FFA500", font=SMALLER_FONT)
         self.label_time_value.place(x=labels_axis['label_time_value_x'], y=labels_axis['label_time_value_y'])
 
         # Start Date Display
@@ -1242,10 +1246,9 @@ class PageOne(tk.Frame):
         global stop_time
         stop_time = datetime.now()
         AppContext.test_stop_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
+        AppContext.time_elapsed = stop_time - start_time
 
-        global time_elapsed
-        time_elapsed = stop_time - start_time
-        time_elapsed = time_elapsed_string(time_elapsed)
+        AppContext.time_elapsed_string = time_elapsed_string(AppContext.time_elapsed)
 
         if var2.get() != 'radH2O':
             if len(AppContext.o2Valuelist) > 0:
@@ -1389,12 +1392,12 @@ def confirm_fields(start_stop):
         a2.cla()
 
         headerFileTitle = "Header"
-        AppContext.current_savePath = directory + '/' + building.get() + "_" + str(tool_id.get()) + "_" + str(location.get()) + "_" + str(
+        AppContext.current_savePath = directory + '/' + building.get() + "_" + str(tool_id.get()) + "_" + str(
+            location.get()) + "_" + str(
             title.get()) + "_" + AppContext.test_start_time
         i = 0
 
         os.mkdir(AppContext.current_savePath)
-
 
         header_list[0] = title.get()
         header_list[1] = client.get()
@@ -1482,13 +1485,9 @@ def confirm_fields(start_stop):
             except:
                 print("no newStartTime to delete")
                 pass
-            try:
-                global oldStopTimeRH2O
-                del oldStopTimeRH2O
-                print("deleted oldStopTimeRH2O")
-            except:
-                print("no newStartTime to delete")
-                pass
+
+            AppContext.oldStopTimeRH2O = None
+
             try:
                 global newStartTimeO2
                 del newStartTimeO2
@@ -1668,10 +1667,10 @@ def confirm_fields(start_stop):
             path = directory + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
                 header_list[2]) + "_" + str(header_list[0]) + "_" + AppContext.test_start_time
 
-        #     try:
-        #         shutil.rmtree(path)
-        #     except OSError as e:
-        #         print("Error: %s - %s." % (e.filename, e.strerror))
+            #     try:
+            #         shutil.rmtree(path)
+            #     except OSError as e:
+            #         print("Error: %s - %s." % (e.filename, e.strerror))
             if not os.path.exists(path) and os.path.exists(AppContext.current_savePath):
                 os.rename(AppContext.current_savePath, path)
                 AppContext.current_savePath = path
@@ -1701,7 +1700,7 @@ def confirm_fields(start_stop):
                     try:
                         newStopTime
                     except:
-                        newStopTime = oldStopTimeRH2O
+                        newStopTime = AppContext.oldStopTimeRH2O
                     writer3.writerow([newStopTime])
                 elif H2OcsvFound == False and O2csvFound == True:
                     try:
@@ -1723,7 +1722,7 @@ def confirm_fields(start_stop):
                     try:
                         newStopTime
                     except:
-                        newStopTime = min(oldStopTimeRO2, oldStopTimeRH2O)
+                        newStopTime = min(oldStopTimeRO2, AppContext.oldStopTimeRH2O)
                     writer3.writerow([newStopTime])
 
                 if H2OcsvFound == True and O2csvFound == True:
@@ -2268,13 +2267,11 @@ def confirm_fields(start_stop):
     tracer_spec = top4.tracer_spec
     i = i + 1
 
-    global time_elapsed
     global O2csvFound, H2OcsvFound, BothcsvFound
     global time_elapsedO2
     global oldStopTimeRO2
     global oldStartTimeRO2
     global time_elapsedO2
-    global oldStopTimeRH2O
     global oldStartTimeRH2O
     if start_stop == 'stop':
         yfield += 180  # adjusted 10/16/20
@@ -2459,9 +2456,8 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             if start_stop == 'start' or start_stop == 'stop':
-                global time_elapsed
                 if var2.get() != 'radH2O':
-                    time_elapsedvar = StringVar(value=time_elapsed)
+                    time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
             if start_stop == 'manage':
                 global newTime_durationO2
                 try:
@@ -2482,18 +2478,13 @@ def confirm_fields(start_stop):
                 try:
                     H2OxbReset[-1]
                 except:
-                    global oldStopTimeRH2O
-                    global oldStartTimeRH2O
-                    time_elapseMin = oldStopTimeRH2O.minute - oldStartTimeRH2O.minute
-                    time_elapseHour = oldStopTimeRH2O.hour - oldStartTimeRH2O.hour
+                # time_elapseMin = oldStopTimeRH2O.minute - oldStartTimeRH2O.minute
+                # time_elapseHour = oldStopTimeRH2O.hour - oldStartTimeRH2O.hour
+                    AppContext.time_elapsed = AppContext.oldStopTimeRH2O - AppContext.oldStartTimeRH2O
+                    AppContext.time_elapsed_string = time_elapsed_string(AppContext.time_elapsed)
                 else:
-                    time_elapseMin = H2OxbReset[-1] - H2OxbReset[0]
-                if time_elapseMin > 60:
-                    time_elapseHour, time_elapseMin = divmod(time_elapseMin, 60)
-                    time_elapsed = str(round(time_elapseHour, 1)) + " hours " + str(
-                        round(time_elapseMin, 1)) + " minutes"
-                else:
-                    time_elapsed = str(round(time_elapseMin, 1)) + " minutes"
+                    AppContext.time_elapsed = timedelta(minutes=H2OxbReset[-1] - H2OxbReset[0])
+                    AppContext.time_elapsed_string = time_elapsed_string(AppContext.time_elapsed)
 
             xfield = 770
             if var2.get() == 'radH2O':
@@ -2503,14 +2494,14 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             if start_stop == 'start' or start_stop == 'stop':
-                time_elapsedvar = StringVar(value=time_elapsed)
+                time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
             if start_stop == 'manage':
-                try:
-                    newTime_durationH2O
-                except:
-                    time_elapsedvar = StringVar(value=time_elapsed)
+                if AppContext.newTime_durationH2O is None:
+                    time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
                 else:
-                    time_elapsedvar = StringVar(value=newTime_durationH2O)
+                    time_elapsedvar = StringVar(value=AppContext.newTime_durationH2O)
+
+
             label14 = tk.Label(top4, textvariable=time_elapsedvar, width=17, bg="grey35", fg="white", font=SMALL_FONT)
             label14.place(x=xfield + paddx, y=175 + paddy * i + yfield)
             i = i + 1
@@ -2744,9 +2735,8 @@ def confirm_fields(start_stop):
 
             try:
                 H2OxbReset[-1]
-
             except:
-                time_elapseH2O = oldStopTimeRH2O - oldStartTimeRH2O
+                time_elapseH2O = AppContext.oldStopTimeRH2O - oldStartTimeRH2O
                 time_elapseSecH2O = time_elapseH2O.total_seconds()
                 time_elapseMinH2O, time_elapseSecH2O = divmod(time_elapseSecH2O, 60)
                 time_elapseHourH2O, time_elapseMinH2O = divmod(time_elapseMinH2O, 60)
@@ -2779,12 +2769,10 @@ def confirm_fields(start_stop):
             if start_stop == 'start' or start_stop == 'stop':
                 time_elapsedvar = StringVar(value=time_elapsedH2O)
             if start_stop == 'manage':
-                try:
-                    newTime_durationH2O
-                except:
+                if AppContext.newTime_durationH2O is None:
                     time_elapsedvar = StringVar(value=time_elapsedH2O)
                 else:
-                    time_elapsedvar = StringVar(value=newTime_durationH2O)
+                    time_elapsedvar = StringVar(value=AppContext.newTime_durationH2O)
             label14 = tk.Label(top4, textvariable=time_elapsedvar, bg="grey35", fg="white", font=SMALL_FONT, width=17)
             label14.place(x=xfield + paddx, y=175 + paddy * i + yfield)
             i = i + 1
@@ -2849,6 +2837,7 @@ def animateh2o(i):
             h2o_value = SerialInterface.get_valid_h2o(3)
             AppContext.currenth2o.set(h2o_value)
             currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
+
             h2o = 999 if h2o_value == "N/A" else h2o_value
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
                 print(
@@ -3116,9 +3105,7 @@ def stop_recording():
     stop_time = datetime.now()
     save_graph_time = datetime.now().strftime("%m_%d_%y_%H.%M.%S")
 
-    global time_elapsed
-    time_elapsed = stop_time - start_time
-    time_elapsed = time_elapsed_string(time_elapsed)
+    AppContext.time_elapsed = stop_time - start_time
 
     with open(f'{root_path}/Header_default.csv', newline='') as t:
         headreader = csv.reader(t)
@@ -3126,7 +3113,8 @@ def stop_recording():
         header_list = []
         for row in headreader:
             header_list.append(row[0])
-    save_path = dir_TGView + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(header_list[2]) + "_" + str(
+    AppContext.current_savePath = dir_TGView + '/' + str(header_list[3]) + "_" + str(header_list[4]) + "_" + str(
+        header_list[2]) + "_" + str(
         header_list[0]) + "_" + save_graph_time
     os.mkdir(AppContext.current_savePath)
     with open(os.path.join(AppContext.current_savePath, 'Header') + '.csv', 'w+', newline='') as c:
@@ -3152,7 +3140,7 @@ def stop_recording():
 
     o2fileTitle = "O2"
     AppContext.o2Valuelist = []
-    with open(os.path.join(save_path, o2fileTitle) + '.csv', 'w+', newline='') as o:
+    with open(os.path.join(AppContext.current_savePath, o2fileTitle) + '.csv', 'w+', newline='') as o:
         writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
         for eachLine in manageGraphData.o2dataList:
             writer1.writerow([eachLine])
@@ -3162,7 +3150,7 @@ def stop_recording():
         o.flush()
     h2ofileTitle = "H2O"
     AppContext.h2oValuelist = []
-    with open(os.path.join(save_path, h2ofileTitle) + '.csv', 'w+', newline='') as h:
+    with open(os.path.join(AppContext.current_savePath, h2ofileTitle) + '.csv', 'w+', newline='') as h:
         writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
         for eachLine in manageGraphData.h2odataList:
             writer2.writerow([eachLine])
@@ -3339,9 +3327,8 @@ def exportH2O(startscreen):
         global newStopTime
         try:
             newStopTime
-
         except:
-            newStopTime = oldStopTimeRH2O
+            newStopTime = AppContext.oldStopTimeRH2O
         else:
             pass
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStopTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
@@ -3351,14 +3338,11 @@ def exportH2O(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(AppContext.time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
-        try:
-            newTime_durationH2O
-        except:
-            global time_elapsedH2O
-            newTime_durationH2O = time_elapsedH2O
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newTime_durationH2O), border=1, ln=1)
+        if AppContext.newTime_durationH2O is None:
+            AppContext.newTime_durationH2O = time_elapsedH2O
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newTime_durationH2O), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Flow (SCFH):', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[8]), border=1, ln=0)
@@ -3552,7 +3536,7 @@ def exportO2(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(AppContext.time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
         global newTime_durationO2
         try:
@@ -3911,7 +3895,7 @@ def exportBoth(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(AppContext.time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
         global newTime_durationO2
         try:
@@ -4026,7 +4010,7 @@ def exportBoth(startscreen):
             newStopTime
             print(newStopTime)
         except:
-            newStopTime = oldStopTimeRH2O
+            newStopTime = AppContext.oldStopTimeRH2O
         else:
             pass
         pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newStopTime.strftime("%H:%M %m/%d/%y")), border=1, ln=1)
@@ -4036,15 +4020,11 @@ def exportBoth(startscreen):
     pdf.cell(leftFieldBoxWidth, fieldBoxHeight, str(header_list[5]), border=1, ln=0)
     pdf.cell(rightColumnSpacing, 7, 'Test Duration:', align='R', ln=0)
     if startt_stopp == 'start' or startt_stopp == 'stop':
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(time_elapsed), border=1, ln=1)
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, pdf_time(AppContext.time_elapsed), border=1, ln=1)
     if startt_stopp == 'manage':
-        try:
-            global newTime_durationH2O
-            newTime_durationH2O
-        except:
-            global time_elapsedH2O
-            newTime_durationH2O = time_elapsedH2O
-        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(newTime_durationH2O), border=1, ln=1)
+        if AppContext.newTime_durationH2O is None:
+            AppContext.newTime_durationH2O = time_elapsedH2O
+        pdf.cell(rightFieldBoxWidth, fieldBoxHeight, str(AppContext.newTime_durationH2O), border=1, ln=1)
     pdf.cell(190, 2, ln=1)
     pdf.cell(leftColumnSpacing, 7, 'Test Flow:', align='R', ln=0)
     pdf.cell(leftFieldBoxWidth / 2, fieldBoxHeight, str(header_list[8]), border=1, ln=0)
@@ -4215,7 +4195,7 @@ def manage_pdf():
         global H2Oyb
 
         global oldStartTimeRH2O
-        global oldStopTimeRH2O
+
         global oldStartTimeRO2
         global oldStopTimeRO2
         global h2obMaxUnedit
@@ -4455,16 +4435,16 @@ def manage_pdf():
                 oldStopTimeMins, oldStopTimeSec = oldStopTime.split(".")
                 oldStopTimeHours, oldStopTimeMins = divmod(int(oldStopTimeMins), 60)
                 oldStopTimeSec = int(oldStopTimeSec) / 10 * 6
-                oldStopTimeRH2O = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours),
-                                                               minutes=int(oldStopTimeMins),
-                                                               seconds=int(oldStopTimeSec))
+                AppContext.oldStopTimeRH2O = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours),
+                                                                          minutes=int(oldStopTimeMins),
+                                                                          seconds=int(oldStopTimeSec))
             else:
                 oldStopTime = header_list[19]
                 oldStopTime, oldStopTimeMins, garbage = oldStopTime.split(":")
                 oldStopTime, oldStopTimeHours = oldStopTime.split(" ")
                 oldStopTimeYear, oldStopTimeMonth, oldStopTimeDay = oldStopTime.split("-")
-                oldStopTimeRH2O = datetime(int(oldStopTimeYear), int(oldStopTimeMonth), int(oldStopTimeDay),
-                                           int(oldStopTimeHours), int(oldStopTimeMins))
+                AppContext.oldStopTimeRH2O = datetime(int(oldStopTimeYear), int(oldStopTimeMonth), int(oldStopTimeDay),
+                                                      int(oldStopTimeHours), int(oldStopTimeMins))
 
             # setting the top (original) graph
             aa1.plot(xx1, yy1, color='DodgerBlue', linewidth=4, marker='o')
@@ -4520,12 +4500,11 @@ def manage_pdf():
                 global newStopTime
                 newStopTime = oldStartTimeRH2O + timedelta(minutes=int(addStopTimeMins), seconds=int(addStopTimeSec))
                 print(newStopTime)
-                global newTime_durationH2O
                 newTime_durationH2O = newStopTime - newStartTime
 
-                newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
+                AppContext.newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
 
-                tk.Label(top, text=newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
+                tk.Label(top, text=AppContext.newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=H2OdurationXfield, y=H2OdurationYfield)
                 tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
                     width=durationWidth, x=H2OdurationXfield - 250, y=H2OdurationYfield)
@@ -4652,8 +4631,9 @@ def manage_pdf():
             oldStopTimeMins, oldStopTimeSec = oldStopTime.split(".")
             oldStopTimeHours, oldStopTimeMins = divmod(int(oldStopTimeMins), 60)
             oldStopTimeSec = int(oldStopTimeSec) / 10 * 6
-            oldStopTimeRH2O = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours), minutes=int(oldStopTimeMins),
-                                                           seconds=int(oldStopTimeSec))
+            AppContext.oldStopTimeRH2O = oldStartTimeRH2O + timedelta(hours=int(oldStopTimeHours),
+                                                                      minutes=int(oldStopTimeMins),
+                                                                      seconds=int(oldStopTimeSec))
 
             h2obAvgUnedit = str(round(mean(yy1), 1))
             h2obMaxUnedit = str(round(max(yy1), 1))
@@ -4767,11 +4747,10 @@ def manage_pdf():
                 global newStopTime
                 newStopTime = oldStartTimeRH2O + timedelta(minutes=int(addStopTimeMins), seconds=int(addStopTimeSec))
 
-                global newTime_durationH2O
                 newTime_durationH2O = newStopTime - newStartTime
-                newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
+                AppContext.newTime_durationH2O = time_elapsed_string(newTime_durationH2O)
 
-                tk.Label(top, text=newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
+                tk.Label(top, text=AppContext.newTime_durationH2O, fg="#ff9500", bg="grey35", font=durationFont).place(
                     width=durationWidth, x=H2OdurationXfield, y=H2OdurationYfield)
                 tk.Label(top, text="Edited Test Duration = ", fg="white", bg="grey35", font=durationFont1).place(
                     width=durationWidth, x=H2OdurationXfield - 250, y=H2OdurationYfield)
@@ -4898,13 +4877,9 @@ def manage_pdf():
         except:
             print("no newStartTime to delete")
             pass
-        try:
-            global oldStopTimeRH2O
-            del oldStopTimeRH2O
-            print("deleted oldStopTimeRH2O")
-        except:
-            print("no newStartTime to delete")
-            pass
+
+        AppContext.oldStopTimeRH2O = None
+
         try:
             global newStartTimeO2
             del newStartTimeO2
