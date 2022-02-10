@@ -2847,7 +2847,7 @@ def animateh2o(i):
         h2o = 0
         if var2.get() != 'radO2':
             h2o_value = SerialInterface.get_valid_h2o(3)
-            AppContext.currenth2o.set(f"{h2o_value}{datetime.now()}")
+            AppContext.currenth2o.set(f"{h2o_value}{datetime.now().strftime('%m-%d-%Y %H.%M.%S%p')}")
             currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
             h2o = 999 if h2o_value == "N/A" else h2o_value
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
@@ -2999,7 +2999,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         o2 = 0
         if var2.get() != 'radH2O':
             o2_value = SerialInterface.get_valid_o2(3)
-            AppContext.currento2.set(f"{o2_value}{datetime.now()}")
+            AppContext.currento2.set(f"{o2_value}{datetime.now().strftime('%m-%d-%Y %H.%M.%S%p')}")
             if o2_value == "N/A":
                 o2 = 999
             else:
