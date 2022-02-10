@@ -462,7 +462,7 @@ class StartPage(tk.Frame):
         AppContext.currento2 = StringVar(value=0)
         # fg="#00CD66"
         # global labelO2_value
-        self.labelO2_value = tk.Label(self, textvariable=AppContext.currento2, width=30, bg="grey35", fg="#60D500",
+        self.labelO2_value = tk.Label(self, textvariable=AppContext.currento2, width=6, bg="grey35", fg="#60D500",
                                       font=('calibri', 20, 'bold'))
         self.labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
 
@@ -474,7 +474,7 @@ class StartPage(tk.Frame):
         self.labelH2O.config(bg="grey35", fg="white")
 
         AppContext.currenth2o = StringVar(value=0)
-        self.labelH2O_value = tk.Label(self, textvariable=AppContext.currenth2o, width=30, bg="grey35", fg="#00BFFF",
+        self.labelH2O_value = tk.Label(self, textvariable=AppContext.currenth2o, width=6, bg="grey35", fg="#00BFFF",
                                        font=('calibri', 20, 'bold'))
         self.labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
         self.bind('<<ShowFrame>>', self.on_show_frame)
@@ -2847,7 +2847,7 @@ def animateh2o(i):
         h2o = 0
         if var2.get() != 'radO2':
             h2o_value = SerialInterface.get_valid_h2o(3)
-            AppContext.currenth2o.set(f"{h2o_value}{datetime.now().strftime('%m-%d-%Y %H.%M.%S%p')}")
+            AppContext.currenth2o.set(h2o_value)
             currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
             h2o = 999 if h2o_value == "N/A" else h2o_value
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
@@ -2905,7 +2905,7 @@ def animateh2o(i):
 
         # cycleH2O = (cycleH2O + 1) % 15
         # if cycleH2O == 0:
-        if AppContext.last_drawH2otime is None or datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=60):
+        if AppContext.last_drawH2otime is None or datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=30):
             ## create a datetime stamp
             h2otime = datetime.now() - start_time
             manageGraphData.update_h2o_dataList(h2o, h2otime)
@@ -2999,7 +2999,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         o2 = 0
         if var2.get() != 'radH2O':
             o2_value = SerialInterface.get_valid_o2(3)
-            AppContext.currento2.set(f"{o2_value}{datetime.now().strftime('%m-%d-%Y %H.%M.%S%p')}")
+            AppContext.currento2.set(o2_value)
             if o2_value == "N/A":
                 o2 = 999
             else:
@@ -3023,7 +3023,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         if not manageGraphData.update_o2_values(o2):
             return
 
-        if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=60):
+        if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=30):
             o2time = datetime.now() - start_time
             manageGraphData.update_o2_dataList(o2, o2time)
             # deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)

@@ -73,3 +73,5 @@ class ManageGraph:
                 self.h2oxList.append(float(x1))
                 self.h2oyList.append(float(y1))
 
+        print(self.h2oxList)
+        print(self.h2oyList)
