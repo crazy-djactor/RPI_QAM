@@ -462,7 +462,7 @@ class StartPage(tk.Frame):
         AppContext.currento2 = StringVar(value=0)
         # fg="#00CD66"
         # global labelO2_value
-        self.labelO2_value = tk.Label(self, textvariable=AppContext.currento2, width=20, bg="grey35", fg="#60D500",
+        self.labelO2_value = tk.Label(self, textvariable=AppContext.currento2, width=30, bg="grey35", fg="#60D500",
                                       font=('calibri', 20, 'bold'))
         self.labelO2_value.place(x=o2_position['value_x'], y=o2_position['value_y'])
 
@@ -474,7 +474,7 @@ class StartPage(tk.Frame):
         self.labelH2O.config(bg="grey35", fg="white")
 
         AppContext.currenth2o = StringVar(value=0)
-        self.labelH2O_value = tk.Label(self, textvariable=AppContext.currenth2o, width=20, bg="grey35", fg="#00BFFF",
+        self.labelH2O_value = tk.Label(self, textvariable=AppContext.currenth2o, width=30, bg="grey35", fg="#00BFFF",
                                        font=('calibri', 20, 'bold'))
         self.labelH2O_value.place(x=h2o_position['value_x'], y=h2o_position['value_y'])
         self.bind('<<ShowFrame>>', self.on_show_frame)
