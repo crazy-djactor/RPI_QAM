@@ -2905,7 +2905,7 @@ def animateh2o(i):
 
         # cycleH2O = (cycleH2O + 1) % 15
         # if cycleH2O == 0:
-        if AppContext.last_drawH2otime is None or datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=30):
+        if AppContext.last_drawH2otime is None or datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=60):
             ## create a datetime stamp
             h2otime = datetime.now() - start_time
             manageGraphData.update_h2o_dataList(h2o, h2otime)
@@ -3023,7 +3023,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         if not manageGraphData.update_o2_values(o2):
             return
 
-        if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=30):
+        if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=60):
             o2time = datetime.now() - start_time
             manageGraphData.update_o2_dataList(o2, o2time)
             # deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
