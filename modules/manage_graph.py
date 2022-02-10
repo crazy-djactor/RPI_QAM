@@ -72,3 +72,4 @@ class ManageGraph:
                 x1, y1 = eachLine.split(',')
                 self.h2oxList.append(float(x1))
                 self.h2oyList.append(float(y1))
+

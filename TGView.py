@@ -2905,92 +2905,67 @@ def animateh2o(i):
 
         # cycleH2O = (cycleH2O + 1) % 15
         # if cycleH2O == 0:
-        if AppContext.last_drawH2otime is None or datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=30):
+        if AppContext.last_drawH2otime is None or datetime.now() - AppContext.last_drawH2otime > timedelta(seconds=60):
             ## create a datetime stamp
             h2otime = datetime.now() - start_time
             manageGraphData.update_h2o_dataList(h2o, h2otime)
 
-            #### meecoDrift is how much the interval is drifting from 1 minute ######
-            # global intervalH2O
-            # meecoDrift = round((h2otime.total_seconds()) / 60, 5) - round((h2otime.total_seconds()) / 60, 0)
-            # if round((h2otime.total_seconds()) / 60, 0) != 0.0:
-            #     if meecoDrift > 0:
-            #         intervalH2O -= math.sqrt(meecoDrift) * 400
-            #     else:
-            #         intervalH2O += math.sqrt(meecoDrift * (-1)) * 400
-            #
-            # if intervalH2O < 2000:
-            #     intervalH2O = 2000
-            # elif intervalH2O > 4000:
-            #     intervalH2O = 4000
-
-            # if party_time == False:
-            #     ani2.event_source.interval = int(intervalH2O)
-            # elif party_time == True:
-            #     ani2.event_source.interval = int(10)
-
             AppContext.last_drawH2otime = datetime.now()
 
-            # print("animateh2o " + str(round((h2otime.total_seconds()) / 60, 5)) + " " + str(
-            #     round((h2otime.total_seconds()) / 60, 0)) + " " + str(ani2.event_source.interval))
-            # print(" meeco interval = " + str(ani2.event_source.interval))
+            ###active graphing
 
-        ###active graphing
+            global tool_id
+            a2.clear()
+            a2.ticklabel_format(useOffset=False)
+            markerStyle = '.'
+            if var2.get() == 'radO2':
+                a2.plot(range(10), range(10), color='red', marker="")
+                a2.plot(range(10), [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], color='red', marker="")
+                a2.set_title("No Data Recieved", fontsize=32, pad=20)
+                a2.set_xlabel('Time (minutes)')
+                a2.set_ylabel('N/A')
+            if var2.get() == 'radBoth':
+                h2oxMax = max(manageGraphData.h2oxList)
+                a2.set_xlim([0, max(1, h2oxMax)])
+                if manageGraphData.h2odata_min < 0:
+                    a2.set_ylim(manageGraphData.h2odata_min - 10, manageGraphData.h2odata_max + 10)
+                else:
+                    a2.set_ylim(0 - 1, manageGraphData.h2odata_max + 10)
+                a2.plot(manageGraphData.h2oxList, manageGraphData.h2oyList, color='#2FA4FF', marker='.', picker=5,
+                        linewidth=1)
 
-        global tool_id
-        a2.clear()
-        a2.ticklabel_format(useOffset=False)
-        markerStyle = '.'
-        if var2.get() == 'radO2':
-            a2.plot(range(10), range(10), color='red', marker="")
-            a2.plot(range(10), [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], color='red', marker="")
-            a2.set_title("No Data Recieved", fontsize=32, pad=20)
-            a2.set_xlabel('Time (minutes)')
-            a2.set_ylabel('N/A')
-        if var2.get() == 'radBoth':
-            h2oxMax = max(manageGraphData.h2oxList)
-            a2.set_xlim([0, max(1, h2oxMax)])
-            if manageGraphData.h2odata_min < 0:
-                a2.set_ylim(manageGraphData.h2odata_min - 10, manageGraphData.h2odata_max + 10)
-            else:
-                a2.set_ylim(0 - 1, manageGraphData.h2odata_max + 10)
-            a2.plot(manageGraphData.h2oxList, manageGraphData.h2oyList, color='#2FA4FF', marker='.', picker=5,
-                    linewidth=1)
+                # COMMENTED OUT 10/8/2020
+                # if isinstance(title, str) and isinstance(tool_id, str):
+                # a2.set_title(tool_id+" "+title, fontsize=28, pad=20)
+                # else:
+                # a2.set_title(tool_id.get()+" "+title.get(), fontsize=28, pad=20)
 
-            # COMMENTED OUT 10/8/2020
-            # if isinstance(title, str) and isinstance(tool_id, str):
-            # a2.set_title(tool_id+" "+title, fontsize=28, pad=20)
-            # else:
-            # a2.set_title(tool_id.get()+" "+title.get(), fontsize=28, pad=20)
+                a2.set_xlabel("Time (minutes)", color="w")
+                a2.set_ylabel("Moisture (PPB)", color="w")
+                a2.tick_params(colors='w')
+                try:
+                    pointerx, pointery = int(xdata[ind]), float(ydata[ind])
+                    pointer = 'Minute: ' + str(pointerx) + '  Moisture: ' + str(pointery)
+                    a2.annotate(pointer, xy=(xdata[ind], ydata[ind]), xytext=(0, -15), fontsize='x-large')
+                    a2.annotate('', xy=(xdata[ind], ydata[ind]), xytext=(xdata[ind], ydata[ind] + 10),
+                                arrowprops={'arrowstyle': '->', 'lw': 4, 'color': '#2FA4FF'}, )
+                except Exception as e:
+                    # print(e)
+                    pass
 
-            a2.set_xlabel("Time (minutes)", color="w")
-            a2.set_ylabel("Moisture (PPB)", color="w")
-            a2.tick_params(colors='w')
-            try:
-                pointerx, pointery = int(xdata[ind]), float(ydata[ind])
-                pointer = 'Minute: ' + str(pointerx) + '  Moisture: ' + str(pointery)
-                a2.annotate(pointer, xy=(xdata[ind], ydata[ind]), xytext=(0, -15), fontsize='x-large')
-                a2.annotate('', xy=(xdata[ind], ydata[ind]), xytext=(xdata[ind], ydata[ind] + 10),
-                            arrowprops={'arrowstyle': '->', 'lw': 4, 'color': '#2FA4FF'}, )
-            except Exception as e:
-                # print(e)
-                pass
+            if var2.get() == 'radH2O':
+                plot_axes_h2o(manageGraphData.h2oxList, manageGraphData.h2oyList, a2)
 
-        if var2.get() == 'radH2O':
-            plot_axes_h2o(manageGraphData.h2oxList, manageGraphData.h2oyList, a2)
-
-        h2ofileTitle = "H2O"
-
-        if recording and var2.get() != 'radO2':
-            AppContext.h2oValuelist = []
-            with open(os.path.join(AppContext.current_savePath, h2ofileTitle) + '.csv', 'w+', newline='') as h:
-                writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
-                for eachLine in manageGraphData.h2odataList:
-                    writer2.writerow([eachLine])
-                    everyLine = eachLine.split(",")
-                    AppContext.h2oValuelist.append(float(everyLine[1]))
-
-                h.flush()
+            h2ofileTitle = "H2O"
+            if recording and var2.get() != 'radO2':
+                AppContext.h2oValuelist = []
+                with open(os.path.join(AppContext.current_savePath, h2ofileTitle) + '.csv', 'w+', newline='') as h:
+                    writer2 = csv.writer(h, escapechar=' ', quoting=csv.QUOTE_NONE)
+                    for eachLine in manageGraphData.h2odataList:
+                        writer2.writerow([eachLine])
+                        everyLine = eachLine.split(",")
+                        AppContext.h2oValuelist.append(float(everyLine[1]))
+                    h.flush()
         try:
             figure_conf = AdjustFigure.default_figure_conf()
             fig_width, fig_height = f2.get_size_inches()
@@ -3005,7 +2980,6 @@ def animateh2o(i):
             img4 = ImageTk.PhotoImage(Image.open('graphH2O.png'))
             img_h2o.configure(image=img4)
             img_h2o.image = img4
-            # replace_objects(img_o2, img_h2o, var2.get(), labelO2, labelO2_value, labelH2O, labelH2O_value)
 
         except FileNotFoundError:
             pass
@@ -3049,7 +3023,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
         if not manageGraphData.update_o2_values(o2):
             return
 
-        if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=30):
+        if AppContext.last_drawO2time is None or datetime.now() - AppContext.last_drawO2time > timedelta(seconds=60):
             o2time = datetime.now() - start_time
             manageGraphData.update_o2_dataList(o2, o2time)
             # deltaDrift = round((o2time.total_seconds()) / 60, 5) - round((o2time.total_seconds()) / 60, 0)
@@ -3102,8 +3076,7 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                 a1.set_ylabel("N/A")
 
             o2fileTitle = "O2"
-
-            if recording == True and var2.get() != 'radH2O':
+            if recording and var2.get() != 'radH2O':
                 AppContext.o2Valuelist = []
                 with open(os.path.join(AppContext.current_savePath, o2fileTitle) + '.csv', 'w+', newline='') as o:
                     writer1 = csv.writer(o, escapechar=' ', quoting=csv.QUOTE_NONE)
@@ -3112,7 +3085,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
                         everyLine = eachLine.split(",")
                         AppContext.o2Valuelist.append(float(everyLine[1]))
                     # print(o2Valuelist)
-
                     o.flush()
         try:
             figure_conf = AdjustFigure.default_figure_conf()
@@ -3128,7 +3100,6 @@ def animateo2(i):  #### animation function. despite the name it actually animate
             img2 = ImageTk.PhotoImage(Image.open('graphO2.png'))
             img_o2.configure(image=img2)
             img_o2.image = img2
-            # replace_objects(img_o2, img_h2o, var2.get(), labelO2, labelO2_value, labelH2O, labelH2O_value)
         except FileNotFoundError:
             pass
 
