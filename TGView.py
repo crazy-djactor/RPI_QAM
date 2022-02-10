@@ -633,11 +633,9 @@ def equipment_controls():
         currentMode.set('Service')
     currentUpper = StringVar()
     currentLower = StringVar()
-    currentUpper.set(
-        round(float(raw_to_ppb(SerialInterface.read_serial_float(15))), 1))  #### comment out for random data###
+    currentUpper.set(SerialInterface.read_equip_upper_cell())  #### comment out for random data###
     # time.sleep(0.02)
-    currentLower.set(
-        round(float(raw_to_ppb(SerialInterface.read_serial_float(16))), 1))  #### comment out for random data###
+    currentLower.set(SerialInterface.read_equip_lower_cell())  #### comment out for random data###
     global currentRaw
 
     modeXfield = 255
@@ -2846,11 +2844,11 @@ def animateh2o(i):
     global xdata, ydata, point, ind, line
 
     def h2odataGrab():
-        global cycleH2O
         h2o = 0
         if var2.get() != 'radO2':
             h2o_value = SerialInterface.get_valid_h2o(3)
             AppContext.currenth2o.set(h2o_value)
+            currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
             h2o = 999 if h2o_value == "N/A" else h2o_value
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
                 print(

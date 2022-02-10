@@ -434,6 +434,18 @@ class SerialInterface:
         # time.sleep(0.02)
         cls.write_serial_float(bytearray([178]), bytearray([16]), valueToLower)
 
+    @classmethod
+    def read_equip_raw_cell(cls):
+        return round(float(raw_to_ppb(SerialInterface.read_serial_float(0))), 1)
+
+    @classmethod
+    def read_equip_upper_cell(cls):
+        return round(float(raw_to_ppb(SerialInterface.read_serial_float(15))), 1)
+
+    @classmethod
+    def read_equip_lower_cell(cls):
+        return round(float(raw_to_ppb(SerialInterface.read_serial_float(16))), 1)
+
 # ########EXPERIMENTAL: use this copy of get_O2 and replace in animation function to try to figure out how to read over 2PPM
 # def get_O2temp(comPortOxygen):
 #     ser = serial.Serial(
