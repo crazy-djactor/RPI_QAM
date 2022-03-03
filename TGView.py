@@ -2454,10 +2454,10 @@ def confirm_fields(start_stop):
             label13 = tk.Label(top4, text="Test Duration:", font=SMALL_FONT)
             label13.place(x=xfield + paddx, y=140 + paddy * i + yfield)
             label13.config(bg="grey25", fg="white")
-
             if start_stop == 'start' or start_stop == 'stop':
                 if var2.get() != 'radH2O':
-                    time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
+                    # time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
+                    time_elapsedvar = StringVar(value=pdf_time(AppContext.time_elapsed))
             if start_stop == 'manage':
                 global newTime_durationO2
                 try:
@@ -2494,10 +2494,12 @@ def confirm_fields(start_stop):
             label13.config(bg="grey25", fg="white")
 
             if start_stop == 'start' or start_stop == 'stop':
-                time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
+                # time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
+                time_elapsedvar = StringVar(value=pdf_time(AppContext.time_elapsed))
             if start_stop == 'manage':
                 if AppContext.newTime_durationH2O is None:
-                    time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
+                    # time_elapsedvar = StringVar(value=AppContext.time_elapsed_string)
+                    time_elapsedvar = StringVar(value=pdf_time(AppContext.time_elapsed))
                 else:
                     time_elapsedvar = StringVar(value=AppContext.newTime_durationH2O)
 
