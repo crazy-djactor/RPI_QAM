@@ -245,5 +245,5 @@ def pdf_time(time_elapsed):
     elif time_elapsed.seconds > 3600:
         string_elapsed = f"{time_elapsed.seconds // 3600}hr {time_elapsed.seconds // 60 % 60}min"
     else:
-        string_elapsed = f"{time_elapsed.seconds // 60 % 60}minutes"
+        string_elapsed = f"{time_elapsed.seconds // 60 % 60} minutes"
     return string_elapsed

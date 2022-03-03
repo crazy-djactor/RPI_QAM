@@ -64,11 +64,8 @@ class SerialInterface:
     # gets raw h2o data: need to use raw_to_ppb function to convert to ppb
     @classmethod
     def get_h20(cls):
-        data = bytearray()
-        echo = bytearray()
         command = bytearray([146])
         operand = bytearray([1])
-        sleepy = 0.02
         try:
             ser = serial.Serial(
                 port=cls.comPortMoist, \
@@ -138,7 +135,6 @@ class SerialInterface:
                 bytesize=serial.EIGHTBITS, \
                 timeout=1)
 
-            sleepy = 0.03
             i = 0
             fullcommand = bytearray([1, 2, 1, 0, 0, 3, 13])
             ser.write(fullcommand)
@@ -157,7 +153,6 @@ class SerialInterface:
             o2_bin = byte1 + byte2 + byte3 + byte4
             # print(o2_bin)
             m = o2_bin[9:]
-            mantissa = 0
             mantissa = (int(m[0]) * 2 ** 22 + int(m[1]) * 2 ** 21 + int(m[2]) * 2 ** 20 + int(m[3]) * \
                         2 ** 19 + int(m[4]) * 2 ** 18 + int(m[5]) * 2 ** 17 + int(m[6]) * 2 ** 16 + int(m[7]) * \
                         2 ** 15 + int(m[8]) * 2 ** 14 + int(m[9]) * 2 ** 13 + int(m[10]) * 2 ** 12 + int(m[11]) * \
