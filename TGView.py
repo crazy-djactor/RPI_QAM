@@ -1435,6 +1435,8 @@ def confirm_fields(start_stop):
         top4.destroy()
 
         recording = True
+        AppContext.last_drawH2otime = datetime.now() - timedelta(minutes=2)
+        AppContext.last_drawO2time = datetime.now() - timedelta(minutes=2)
         # --------------------------------------#
         #           Delete Test Button         #
         # --------------------------------------#
@@ -2837,10 +2839,17 @@ def animateh2o(i):
         h2o = 0
         if var2.get() != 'radO2':
             h2o_value = SerialInterface.get_valid_h2o(3)
-            AppContext.currenth2o.set(h2o_value)
+
             currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
 
-            h2o = 999 if h2o_value == "N/A" else h2o_value
+            if h2o_value == "N/A":
+                h2o = 999
+                AppContext.currenth2o.set(h2o_value)
+            else:
+                h2o = h2o_value
+                if h2o < 0:
+                    h2o = 0
+                AppContext.currenth2o.set(h2o)
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
                 print(
                     "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMEECO WAS DISCONNECTED DURING TESTING. PLEASE RESTART TGVIEW\n\n\n\n\n")
