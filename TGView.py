@@ -2775,14 +2775,16 @@ def animateh2o(i):
         h2o = 0
         if var2.get() != 'radO2':
             h2o_value = SerialInterface.get_valid_h2o(3)
-            currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
 
+            currentRaw.set(SerialInterface.read_equip_raw_cell())  #### comment out for random data###
+            print(f"raw_h2o_value {h2o_value}")
             if h2o_value == "N/A":
                 h2o = 999
                 AppContext.currenth2o.set(h2o_value)
             else:
                 h2o = h2o_value
-                if h2o < 0:
+                print(f"raw_h2o_value1 {h2o}")
+                if h2o < 0.5:
                     h2o = 0
                 AppContext.currenth2o.set(h2o)
             if recording and h2o_value == "N/A" and SerialInterface.try_failedH2O == 10:
