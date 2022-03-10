@@ -23,8 +23,6 @@ class AppContext:
 
     newStartTimeO2 = None
     newStopTimeO2 = None
-    oldStartTimeO2 = None
-    oldStopTimeO2 = None
 
     o2bAvgEdit = ""
     o2bAvgUnedit = ""
@@ -91,6 +89,8 @@ class AppContext:
 
     time_elapsed_string = ''
     time_elapsed = None
+
+    newTime_durationO2 = None
 
     def __init__(self):
         directory = ""
