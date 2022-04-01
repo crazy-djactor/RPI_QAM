@@ -46,7 +46,7 @@ class ManageGraph:
         if len(self.o2xList) and self.o2xList[-1] < last_tick-1:
             for i in range(int(round(self.o2xList[-1] + 1)), last_tick):
                 self.o2data_string = f"{self.o2data_string}\n{i},{o2}"
-        self.o2data_string = f"{self.o2data_string}\n{str(int(round((o2time.total_seconds()) / 60, 0)))},{o2}"
+        self.o2data_string = f"{self.o2data_string}\n{str(last_tick)},{o2}"
         ############################
         self.o2dataList = self.o2data_string.split('\n')
         self.o2dataList.pop(0)
@@ -66,7 +66,7 @@ class ManageGraph:
         if len(self.h2oxList) and self.h2oxList[-1] < last_tick-1:
             for i in range(int(round(self.h2oxList[-1] + 1)), last_tick):
                 self.h2odata_string = f"{self.h2odata_string}\n{i},{h2o}"
-        self.h2odata_string = f"{self.h2odata_string}\n{str(int(round((h2otime.total_seconds()) / 60, 0)))},{h2o}"
+        self.h2odata_string = f"{self.h2odata_string}\n{str(last_tick)},{h2o}"
         ############################
         self.h2odataList = self.h2odata_string.split('\n')
         self.h2odataList.pop(0)
